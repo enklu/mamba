@@ -3,6 +3,7 @@ using System.Net;
 using DotNetty.Transport.Bootstrapping;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
+using Enklu.Data;
 using Enklu.Mamba.Util;
 using Enklu.Mycerializer.Netty;
 using Serilog;
@@ -12,7 +13,7 @@ namespace Enklu.Mamba.Network
     /// <summary>
     /// Controls Mycelium connection.
     /// </summary>
-    public class MyceliumController : IDisposable
+    public class MyceliumController : IDisposable, IMyceliumInterface
     {
         /// <summary>
         /// Configuration for Mycelium connection.
@@ -35,6 +36,11 @@ namespace Enklu.Mamba.Network
         private IPAddress _ip;
 
         /// <summary>
+        /// The current handler.
+        /// </summary>
+        private MyceliumClientHandler _handler;
+
+        /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="config">The configuration.</param>
@@ -42,7 +48,7 @@ namespace Enklu.Mamba.Network
         {
             _config = config;
         }
-
+        
         /// <summary>
         /// Starts the controller.
         /// </summary>
@@ -73,13 +79,19 @@ namespace Enklu.Mamba.Network
                         new PayloadEncoder(metrics, binder),
                         new PayloadDecoder(metrics, binder));
 
-                    var handler = new MyceliumClientHandler(_config.Token);
-                    handler.OnDisconnected += Handler_OnDisconnected;
+                    _handler = new MyceliumClientHandler(_config.Token);
+                    _handler.OnDisconnected += Handler_OnDisconnected;
 
-                    pipeline.AddLast("handler", handler);
+                    pipeline.AddLast("handler", _handler);
                 }));
 
             Connect();
+        }
+
+        /// <inheritdoc />
+        public void Send(ElementActionData[] actions)
+        {
+            // TODO
         }
 
         /// <summary>

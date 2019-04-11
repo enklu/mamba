@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using CommandLine;
+using Enklu.Mamba.Kinect;
 using Enklu.Mamba.Network;
 using Serilog;
 
@@ -53,18 +54,22 @@ namespace Enklu.Mamba
         /// <returns></returns>
         private static async Task Run(Options options)
         {
-            using (var controller = new MyceliumController(new MyceliumControllerConfiguration
+            using (var network = new MyceliumController(new MyceliumControllerConfiguration
             {
                 Ip = options.MyceliumIp,
                 Port = options.MyceliumPort,
                 Token = options.LoginToken
             }))
             {
-                controller.Start();
+                using (var kinect = new KinectController(new KinectControllerConfiguration(), network))
+                {
+                    network.Start();
+                    kinect.Start();
 
-                Console.ReadLine();
+                    Console.ReadLine();
 
-                Log.Information("Shutting down.");
+                    Log.Information("Shutting down.");
+                }
             }
         }
     }

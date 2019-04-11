@@ -1,30 +1,45 @@
 ﻿using System;
-using System.Threading.Tasks;
 using DotNetty.Transport.Channels;
 using Enklu.Mycelium.Messages;
 using Serilog;
 
 namespace Enklu.Mamba.Network
 {
+    /// <summary>
+    /// Handles mycelium needs.
+    /// </summary>
     public class MyceliumClientHandler : ChannelHandlerAdapter
     {
+        /// <summary>
+        /// The token to login with.
+        /// </summary>
         private readonly string _token;
 
+        /// <summary>
+        /// True iff we are currently connected.
+        /// </summary>
         private volatile bool _isAlive;
+
+        /// <summary>
+        /// The context with which to send messages.
+        /// </summary>
         private IChannelHandlerContext _context;
 
+        /// <summary>
+        /// Called when we disconnect.
+        /// </summary>
         public event Action<MyceliumClientHandler> OnDisconnected;
 
+        /// <summary>
+        /// Controller.
+        /// </summary>
+        /// <param name="token">The token to login with.</param>
         public MyceliumClientHandler(string token)
         {
             _token = token;
         }
-
-        public Task Close()
-        {
-            return CloseAsync(_context);
-        }
-
+        
+        /// <inheritdoc />
         public override void ChannelActive(IChannelHandlerContext context)
         {
             base.ChannelActive(context);
@@ -41,6 +56,7 @@ namespace Enklu.Mamba.Network
             });
         }
 
+        /// <inheritdoc />
         public override void ChannelInactive(IChannelHandlerContext context)
         {
             base.ChannelInactive(context);
@@ -52,6 +68,7 @@ namespace Enklu.Mamba.Network
             OnDisconnected?.Invoke(this);
         }
 
+        /// <inheritdoc />
         public override void ChannelRead(
             IChannelHandlerContext context,
             object message)
