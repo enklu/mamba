@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <AssemblyName>Enklu.Mamba</AssemblyName>
+    <RootNamespace>Enklu.Mamba</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommandLineParser" Version="2.4.3" />
+    <PackageReference Include="Enklu.Data" Version="0.1.0" />
+    <PackageReference Include="Mycelium.Messages" Version="0.1.0" />
+    <PackageReference Include="Mycelium.Messages.Gen" Version="0.1.0" />
+    <PackageReference Include="Mycerializer" Version="0.1.0" />
+    <PackageReference Include="Mycerializer.Netty" Version="0.1.0" />
+    <PackageReference Include="Serilog" Version="2.8.0" />
+    <PackageReference Include="Serilog.Sinks.ColoredConsole" Version="3.0.1" />
+    <PackageReference Include="Serilog.Sinks.Loggly" Version="5.3.0" />
+  </ItemGroup>
+
+</Project>
