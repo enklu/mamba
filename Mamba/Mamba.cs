@@ -6,6 +6,9 @@ using Serilog;
 
 namespace Enklu.Mamba
 {
+    /// <summary>
+    /// Command line options.
+    /// </summary>
     public class Options
     {
         [Option('i', "ip", Default = "34.216.59.227", HelpText = "IP of Mycelium instance to connect to.")]
@@ -18,8 +21,14 @@ namespace Enklu.Mamba
         public string LoginToken { get; set; }
     }
 
+    /// <summary>
+    /// Entry point.
+    /// </summary>
     class Mamba
     {
+        /// <summary>
+        /// Main.
+        /// </summary>
         static void Main(params string[] argv)
         {
             // logging
@@ -37,6 +46,11 @@ namespace Enklu.Mamba
                 .WithParsed(o => Run(o).Wait());
         }
 
+        /// <summary>
+        /// Starts the application.
+        /// </summary>
+        /// <param name="options">Options to run with.</param>
+        /// <returns></returns>
         private static async Task Run(Options options)
         {
             using (var controller = new MyceliumController(new MyceliumControllerConfiguration

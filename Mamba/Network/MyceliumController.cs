@@ -9,27 +9,43 @@ using Serilog;
 
 namespace Enklu.Mamba.Network
 {
-    public class MyceliumControllerConfiguration
-    {
-        public string Ip { get; set; }
-        public int Port { get; set; }
-
-        public string Token { get; set; }
-    }
-
+    /// <summary>
+    /// Controls Mycelium connection.
+    /// </summary>
     public class MyceliumController : IDisposable
     {
+        /// <summary>
+        /// Configuration for Mycelium connection.
+        /// </summary>
         private readonly MyceliumControllerConfiguration _config;
 
+        /// <summary>
+        /// Creates channels.
+        /// </summary>
         private Bootstrap _bootstrap;
+
+        /// <summary>
+        /// Event loop for processing channel events.
+        /// </summary>
         private MultithreadEventLoopGroup _group;
+
+        /// <summary>
+        /// The IP address.
+        /// </summary>
         private IPAddress _ip;
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="config">The configuration.</param>
         public MyceliumController(MyceliumControllerConfiguration config)
         {
             _config = config;
         }
 
+        /// <summary>
+        /// Starts the controller.
+        /// </summary>
         public void Start()
         {
             var ipAddresses = Dns.GetHostAddresses(_config.Ip);
@@ -66,6 +82,9 @@ namespace Enklu.Mamba.Network
             Connect();
         }
 
+        /// <summary>
+        /// Connects to Mycelium.
+        /// </summary>
         private void Connect()
         {
             try
@@ -85,14 +104,21 @@ namespace Enklu.Mamba.Network
             }
         }
 
-        private void Handler_OnDisconnected(MyceliumClientHandler obj)
+        /// <summary>
+        /// Called when the channel has been disconnected.
+        /// </summary>
+        /// <param name="handler">The handler.</param>
+        private void Handler_OnDisconnected(MyceliumClientHandler handler)
         {
             Log.Information("Disconnected from Mycelium.");
 
             // reconnect
-            //Connect();
+            Connect();
         }
 
+        /// <summary>
+        /// <c>IDisposable</c> implementation.
+        /// </summary>
         private void ReleaseUnmanagedResources()
         {
             _group
@@ -102,12 +128,18 @@ namespace Enklu.Mamba.Network
                 .Wait();
         }
 
+        /// <summary>
+        /// <c>IDisposable</c> implementation.
+        /// </summary>
         public void Dispose()
         {
             ReleaseUnmanagedResources();
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>
+        /// <c>IDisposable</c> implementation.
+        /// </summary>
         ~MyceliumController()
         {
             ReleaseUnmanagedResources();
