@@ -1,7 +1,5 @@
 # Mamba
 
-Configurable Kinect controller, integrated with the Enkluniverse.
-
 *Why is this named mamba?* My friend, the Black Mamba can see IR, JUST LIKE A KINECT! Get it?
 
 
