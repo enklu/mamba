@@ -5,6 +5,8 @@ using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
 using Enklu.Data;
 using Enklu.Mamba.Util;
+using Enklu.Mycelium.Messages;
+using Enklu.Mycelium.Messages.Experience;
 using Enklu.Mycerializer.Netty;
 using Serilog;
 
@@ -89,7 +91,49 @@ namespace Enklu.Mamba.Network
         }
 
         /// <inheritdoc />
-        public void Send(ElementActionData[] actions)
+        public void Create(string parentId, ElementData element)
+        {
+            try
+            {
+                _handler.Send(new CreateElementRequest
+                {
+                    Element = element,
+                    ParentId = _handler.Map.ElementHash(parentId)
+                });
+            }
+            catch (NullReferenceException)
+            {
+                // handler may be null
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"Could not send create event: {ex.Message}");
+            }
+        }
+
+        /// <inheritdoc />
+        public void Update(ElementActionData[] actions)
+        {
+            foreach (var action in actions)
+            {
+                try
+                {
+                    _handler.Send(ToEvent(action));
+                }
+                catch (NullReferenceException)
+                {
+                    // handler may be null
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning($"Could not send update event: {ex.Message}");
+                }
+            }
+        }
+        
+        /// <inheritdoc />
+        public void Destroy(string id)
         {
             // TODO
         }
@@ -129,10 +173,86 @@ namespace Enklu.Mamba.Network
         }
 
         /// <summary>
+        /// Creates an event from an action.
+        /// </summary>
+        /// <param name="action">The action.</param>
+        /// <returns></returns>
+        private UpdateElementEvent ToEvent(ElementActionData action)
+        {
+            switch (action.SchemaType)
+            {
+                case ElementActionSchemaTypes.BOOL:
+                {
+                    return new UpdateElementBoolEvent
+                    {
+                        ElementHash = _handler.Map.ElementHash(action.ElementId),
+                        PropHash = _handler.Map.PropHash(action.Key),
+                        Value = (bool)action.Value
+                    };
+                }
+                case ElementActionSchemaTypes.COL4:
+                {
+                    return new UpdateElementCol4Event
+                    {
+                        ElementHash = _handler.Map.ElementHash(action.ElementId),
+                        PropHash = _handler.Map.PropHash(action.Key),
+                        Value = (Col4)action.Value
+                    };
+                }
+                case ElementActionSchemaTypes.FLOAT:
+                {
+                    return new UpdateElementFloatEvent
+                    {
+                        ElementHash = _handler.Map.ElementHash(action.ElementId),
+                        PropHash = _handler.Map.PropHash(action.Key),
+                        Value = (float)action.Value
+                    };
+                }
+                case ElementActionSchemaTypes.INT:
+                {
+                    return new UpdateElementIntEvent
+                    {
+                        ElementHash = _handler.Map.ElementHash(action.ElementId),
+                        PropHash = _handler.Map.PropHash(action.Key),
+                        Value = (int)action.Value
+                    };
+                }
+                case ElementActionSchemaTypes.STRING:
+                {
+                    return new UpdateElementStringEvent
+                    {
+                        ElementHash = _handler.Map.ElementHash(action.ElementId),
+                        PropHash = _handler.Map.PropHash(action.Key),
+                        Value = (string)action.Value
+                    };
+                }
+                case ElementActionSchemaTypes.VEC3:
+                {
+                    return new UpdateElementVec3Event
+                    {
+                        ElementHash = _handler.Map.ElementHash(action.ElementId),
+                        PropHash = _handler.Map.PropHash(action.Key),
+                        Value = (Vec3)action.Value
+                    };
+                }
+                default:
+                {
+                    throw new Exception(
+                        $"Could not creaate update event for unknown schema type '{action.SchemaType}'.");
+                }
+            }
+        }
+
+        /// <summary>
         /// <c>IDisposable</c> implementation.
         /// </summary>
         private void ReleaseUnmanagedResources()
         {
+            if (null == _group)
+            {
+                return;
+            }
+
             _group
                 .ShutdownGracefullyAsync(
                     TimeSpan.FromMilliseconds(100),
