@@ -163,7 +163,7 @@ namespace Enklu.Mamba.Kinect
             }
 
             var elementId = _elementPool[0];
-            Log.Information("Body Detected (Id={0} Element={1})", id, elementId);
+            Log.Information("Body detected (Id={0} Element={1})", id, elementId);
             
             // Remove from pool, add reservation.
             _bodyElements[id] = elementId;
@@ -206,12 +206,12 @@ namespace Enklu.Mamba.Kinect
 
             var shoulderLeft = data.JointPositions[JointType.ShoulderLeft];
             var shoulderRight = data.JointPositions[JointType.ShoulderRight];
-            var midPoint = new Vec3
-            {
-                X = (shoulderLeft.X + shoulderRight.X) / 2,
-                Y = (shoulderLeft.Y + shoulderRight.Y) / 2,
-                Z = (shoulderLeft.Z + shoulderRight.Z) / 2
-            };
+            
+            var midPoint = new Vec3(
+                (shoulderLeft.x + shoulderRight.x) / 2,
+                (shoulderLeft.y + shoulderRight.y) / 2,
+                (shoulderLeft.z + shoulderRight.z) / 2
+            );
             
             // TODO: Offset along cross product by 0.2m
             
@@ -240,7 +240,7 @@ namespace Enklu.Mamba.Kinect
                 return;
             }
             
-            Log.Information("Body Lost (Id={0} Element={1})", id, elementId);
+            Log.Information("Body lost (Id={0} Element={1})", id, elementId);
 
             // Remove reservation, add back to the pool.
             _bodyElements.Remove(id);
