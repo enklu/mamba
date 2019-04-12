@@ -113,6 +113,7 @@ namespace Enklu.Mamba.Kinect
                 try
                 {
                     OnBodyLost?.Invoke(_scratch[0]);
+                    _scratch.RemoveAt(0);
                 }
                 catch (Exception e)
                 {
