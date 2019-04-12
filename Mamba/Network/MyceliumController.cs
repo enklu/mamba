@@ -93,6 +93,12 @@ namespace Enklu.Mamba.Network
         /// <inheritdoc />
         public void Create(string parentId, ElementData element)
         {
+            // Handler may be null
+            if (_handler == null)
+            {
+                return;
+            }
+            
             try
             {
                 _handler.Send(new CreateElementRequest
@@ -100,10 +106,6 @@ namespace Enklu.Mamba.Network
                     Element = element,
                     ParentId = _handler.Map.ElementHash(parentId)
                 });
-            }
-            catch (NullReferenceException)
-            {
-                // handler may be null
             }
             catch (Exception ex)
             {
@@ -114,16 +116,17 @@ namespace Enklu.Mamba.Network
         /// <inheritdoc />
         public void Update(ElementActionData[] actions)
         {
+            // Handler may be null
+            if (_handler == null)
+            {
+                return;
+            }
+            
             foreach (var action in actions)
             {
                 try
                 {
                     _handler.Send(ToEvent(action));
-                }
-                catch (NullReferenceException)
-                {
-                    // handler may be null
-                    return;
                 }
                 catch (Exception ex)
                 {
