@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using Enklu.Data;
 using Enklu.Mamba.Network;
 using Microsoft.Kinect;
