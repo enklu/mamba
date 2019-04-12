@@ -5,7 +5,7 @@
 
 ### Setup
 
-Requires .NET Core 2.1.
+Requires .NET Framework 4.7.1.
 
 Simply open the solution and build. Enklu Nuget packages will be resolved from public Nuget feed.
 
@@ -20,7 +20,3 @@ Mamba is configured by command line parameters.
 
   -t, --token    Required. Multiplayer token issued from Trellis for a specific experience.
 ```
-
-### Development
-
-For general development, use `dotnet watch --project Mamba run -- [PARAMETERS]`.
