@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Enklu.Data;
 using Microsoft.Kinect;
 using Serilog;
+using Enklu.Data;
 
 namespace Enklu.Mamba.Kinect
 {
@@ -93,7 +94,7 @@ namespace Enklu.Mamba.Kinect
                         var joint = body.Joints[type];
                         if (joint.TrackingState != TrackingState.NotTracked)
                         {
-                            data.JointPositions[type] = joint.Position;
+                            data.JointPositions[type] = new Vec3(-joint.Position.X, joint.Position.Y, joint.Position.Z);
                         }
                     }
                     
@@ -108,39 +109,23 @@ namespace Enklu.Mamba.Kinect
                 }
             }
 
-            while (_scratch.Count > 0)
+            for (var i = 0; i < _scratch.Count; i++)
             {
+                var id = _scratch[i];
+                
                 try
                 {
-                    OnBodyLost?.Invoke(_scratch[0]);
-                    _scratch.RemoveAt(0);
+                    OnBodyLost?.Invoke(id);
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine("Error invoking BodyLost: " + e);
                 }
                 
-                _scratch.RemoveAt(0);
+                _trackedBodies.Remove(id);
             }
             
             bodyFrame.Dispose();
-        }
-    }
-
-    public struct Vec3
-    {
-        public float X;
-        public float Y;
-        public float Z;
-        
-        public static implicit operator Vec3(CameraSpacePoint cameraSpacePoint)
-        {
-            return new Vec3
-            {
-                X = -cameraSpacePoint.X,
-                Y = cameraSpacePoint.Y,
-                Z = cameraSpacePoint.Z
-            };
         }
     }
 }
