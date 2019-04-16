@@ -49,8 +49,8 @@
     <Reference Include="DotNetty.Transport, Version=0.6.0.0, Culture=neutral, PublicKeyToken=bc13ca065fa06c29, processorArchitecture=MSIL">
       <HintPath>..\packages\DotNetty.Transport.0.6.0\lib\net45\DotNetty.Transport.dll</HintPath>
     </Reference>
-    <Reference Include="Enklu.Data, Version=0.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Enklu.Data.0.1.0\lib\net35\Enklu.Data.dll</HintPath>
+    <Reference Include="Enklu.Data, Version=0.1.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Enklu.Data.0.1.1\lib\net35\Enklu.Data.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions, Version=1.1.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Extensions.DependencyInjection.Abstractions.1.1.0\lib\netstandard1.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
@@ -69,11 +69,11 @@
       <Private>True</Private>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Mycelium.Messages, Version=0.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Mycelium.Messages.0.1.0\lib\net35\Mycelium.Messages.dll</HintPath>
+    <Reference Include="Mycelium.Messages, Version=0.1.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Mycelium.Messages.0.1.1\lib\net35\Mycelium.Messages.dll</HintPath>
     </Reference>
-    <Reference Include="Mycelium.Messages.Gen, Version=0.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Mycelium.Messages.Gen.0.1.0\lib\net35\Mycelium.Messages.Gen.dll</HintPath>
+    <Reference Include="Mycelium.Messages.Gen, Version=0.1.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Mycelium.Messages.Gen.0.1.1\lib\net35\Mycelium.Messages.Gen.dll</HintPath>
     </Reference>
     <Reference Include="Mycerializer, Version=0.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Mycerializer.0.1.0\lib\net35\Mycerializer.dll</HintPath>

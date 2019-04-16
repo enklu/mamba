@@ -98,7 +98,7 @@ namespace Enklu.Mamba.Network
                 _handler.Send(new CreateElementRequest
                 {
                     Element = element,
-                    ParentId = _handler.Map.ElementHash(parentId)
+                    ParentHash = _handler.Map.ElementHash(parentId)
                 });
             }
             catch (NullReferenceException)
