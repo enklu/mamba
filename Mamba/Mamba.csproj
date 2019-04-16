@@ -238,6 +238,7 @@
     <Compile Include="Kinect\ColorCapture.cs" />
     <Compile Include="Kinect\KinectController.cs" />
     <Compile Include="Kinect\KinectControllerConfiguration.cs" />
+    <Compile Include="Kinect\Math.cs" />
     <Compile Include="Mamba.cs" />
     <Compile Include="Network\IMyceliumInterface.cs" />
     <Compile Include="Network\MyceliumClientHandler.cs" />
