@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using DotNetty.Transport.Channels;
 using Enklu.Data;
 using Enklu.Mycelium.Messages;
@@ -18,22 +20,25 @@ namespace Enklu.Mamba.Network
         private readonly string _token;
 
         /// <summary>
-        /// True iff we are currently connected.
+        /// Sources for req/res mapping.
         /// </summary>
-        private volatile bool _isAlive;
+        private readonly Dictionary<int, TaskCompletionSource<RoomResponse>> _sources = new Dictionary<int, TaskCompletionSource<RoomResponse>>();
 
         /// <summary>
         /// The context with which to send messages.
         /// </summary>
         private IChannelHandlerContext _context;
 
+        /// <summary>
+        /// Maps from id to hash.
+        /// </summary>
         public ElementMap Map { get; private set; }
 
         /// <summary>
         /// Called when we disconnect.
         /// </summary>
         public event Action<MyceliumClientHandler> OnDisconnected;
-
+        
         /// <summary>
         /// Controller.
         /// </summary>
@@ -54,12 +59,29 @@ namespace Enklu.Mamba.Network
             _context.WriteAndFlushAsync(message);
         }
 
+        /// <summary>
+        /// Sends a message and calls the callback when the response is received.
+        /// </summary>
+        /// <param name="req">The request to send.</param>
+        public Task<RoomResponse> SendRequest(RoomRequest req)
+        {
+            var source = new TaskCompletionSource<RoomResponse>();
+
+            lock (_sources)
+            {
+                _sources[req.RequestId] = source;
+            }
+
+            Send(req);
+
+            return source.Task;
+        }
+
         /// <inheritdoc />
         public override void ChannelActive(IChannelHandlerContext context)
         {
             base.ChannelActive(context);
-
-            _isAlive = true;
+            
             _context = context;
 
             Log.Information("Connected! Sending login request.");
@@ -75,9 +97,7 @@ namespace Enklu.Mamba.Network
         public override void ChannelInactive(IChannelHandlerContext context)
         {
             base.ChannelInactive(context);
-
-            _isAlive = false;
-
+            
             Log.Information("Disconnected!");
 
             OnDisconnected?.Invoke(this);
@@ -99,6 +119,23 @@ namespace Enklu.Mamba.Network
                 Log.Information("Recieved scene diff event.");
 
                 Map = diff.Map;
+            }
+            else if (message is RoomResponse res)
+            {
+                TaskCompletionSource<RoomResponse> source;
+                lock (_sources)
+                {
+                    _sources.TryGetValue(res.RequestId, out source);
+                }
+
+                if (null == source)
+                {
+                    Log.Warning($"Received a response for a request we are not tracking: {res.RequestId}.");
+                }
+                else
+                {
+                    source.SetResult(res);
+                }
             }
             else
             {

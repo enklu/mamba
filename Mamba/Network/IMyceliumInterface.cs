@@ -1,4 +1,6 @@
-﻿using Enklu.Data;
+﻿using System.Threading.Tasks;
+using Enklu.Data;
+using Enklu.Mycelium.Messages.Experience;
 
 namespace Enklu.Mamba.Network
 {
@@ -12,7 +14,11 @@ namespace Enklu.Mamba.Network
         /// </summary>
         /// <param name="parentId">The parent to attach this element to.</param>
         /// <param name="element">The data for the element to create.</param>
-        void Create(string parentId, ElementData element);
+        Task<ElementData> Create(
+            string parentId,
+            ElementData element,
+            string owner = null,
+            ElementExpirationType expiration = ElementExpirationType.Session);
 
         /// <summary>
         /// Sends update actions.
@@ -24,6 +30,6 @@ namespace Enklu.Mamba.Network
         /// Destroys an element.
         /// </summary>
         /// <param name="id">The id.</param>
-        void Destroy(string id);
+        Task Destroy(string id);
     }
 }
