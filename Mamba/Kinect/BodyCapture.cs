@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Enklu.Data;
 using Microsoft.Kinect;
 using Serilog;
-using Enklu.Data;
 
 namespace Enklu.Mamba.Kinect
 {
@@ -12,6 +11,7 @@ namespace Enklu.Mamba.Kinect
         public struct SensorData
         {
             public Dictionary<JointType, Vec3> JointPositions;
+            public Dictionary<JointType, Vec3> JointRotations;
         }
         
         private readonly KinectSensor _sensor;
@@ -33,7 +33,7 @@ namespace Enklu.Mamba.Kinect
         {
             _sensor = sensor;
 
-            _jointsDesired = new[] { JointType.ShoulderLeft, JointType.ShoulderRight };
+            _jointsDesired = new[] { JointType.SpineShoulder };
         }
 
         public void Start()
@@ -85,16 +85,19 @@ namespace Enklu.Mamba.Kinect
 
                     var data = new SensorData
                     {
-                        JointPositions = new Dictionary<JointType, Vec3>()
+                        JointPositions = new Dictionary<JointType, Vec3>(),
+                        JointRotations = new Dictionary<JointType, Vec3>()
                     };
 
                     for (var j = 0; j < _jointsDesired.Length; j++)
                     {
                         var type = _jointsDesired[j];
                         var joint = body.Joints[type];
+                        
                         if (joint.TrackingState != TrackingState.NotTracked)
                         {
                             data.JointPositions[type] = new Vec3(-joint.Position.X, joint.Position.Y, joint.Position.Z);
+                            data.JointRotations[type] = Math.QuatToEuler(body.JointOrientations[type].Orientation);
                         }
                     }
                     

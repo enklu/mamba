@@ -59,8 +59,9 @@ namespace Enklu.Mamba.Kinect
         /// <summary>
         /// Schema values.
         /// </summary>
+        private const string PropVisible = "visible";
         private const string PropPosition = "position";
-        private const string PropVisible = "visible";    // Doesn't show up in EnkluPlayer's prop hash map
+        private const string PropRotation = "rotation";
 
         /// <summary>
         /// Constructor.
@@ -79,6 +80,8 @@ namespace Enklu.Mamba.Kinect
         /// </summary>
         public void Start()
         {
+            Log.Information("Waiting for Kinect...");
+            
             _sensor = KinectSensor.GetDefault();
             _sensor.IsAvailableChanged += SensorOnIsAvailableChanged;
             
@@ -100,6 +103,8 @@ namespace Enklu.Mamba.Kinect
         /// </summary>
         public void Dispose()
         {
+            // Kind of a hail mary. Network might have already been disposed :(
+            HideElements();
             ReleaseUnmanagedResources();
             GC.SuppressFinalize(this);
         }
@@ -117,7 +122,34 @@ namespace Enklu.Mamba.Kinect
             
             _sensor.Close();
         }
+
+        /// <summary>
+        /// Sets the visibility of all pooled elements to false.
+        /// </summary>
+        private void HideElements()
+        {
+            var hideData = new ElementActionData[_elementPool.Count];
+
+            for (var i = 0; i < _elementPool.Count; i++)
+            {
+                hideData[i] = new ElementActionData
+                {
+                    ElementId = _elementPool[i],
+                    Type = "update",
+                    SchemaType = "bool",
+                    Key = PropVisible,
+                    Value = false,
+                };
+            }
+            
+            _network.Update(hideData);
+        }
         
+        /// <summary>
+        /// Called when the Kinect SDK changes its device availability. 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
         private void SensorOnIsAvailableChanged(object sender, IsAvailableChangedEventArgs args)
         {
             if (args.IsAvailable)
@@ -144,8 +176,15 @@ namespace Enklu.Mamba.Kinect
                 _bodyCapture?.Stop();
 //                _colorCapture?.Stop();
 
-                // TODO: Hide elements, reset lookup tables
+                // TODO: Reset lookup tables
+                HideElements();
 
+                foreach (var id in _bodyElements.Values)
+                {
+                    _elementPool.Add(id);
+                }
+                _bodyElements.Clear();
+                
                 _active = false;
             }
         }
@@ -196,24 +235,12 @@ namespace Enklu.Mamba.Kinect
             }
 
             // TODO: Read from a joint config.
-            if (!data.JointPositions.ContainsKey(JointType.ShoulderLeft) ||
-                !data.JointPositions.ContainsKey(JointType.ShoulderRight))
+            if (!data.JointPositions.ContainsKey(JointType.SpineShoulder))
             {
                 // Early out if we can't determine a valid position.
                 // TODO: Toggle visibility when this happens.
                 return;
             }
-
-            var shoulderLeft = data.JointPositions[JointType.ShoulderLeft];
-            var shoulderRight = data.JointPositions[JointType.ShoulderRight];
-            
-            var midPoint = new Vec3(
-                (shoulderLeft.x + shoulderRight.x) / 2,
-                (shoulderLeft.y + shoulderRight.y) / 2,
-                (shoulderLeft.z + shoulderRight.z) / 2
-            );
-            
-            // TODO: Offset along cross product by 0.2m
             
             _network.Update(new []
             {
@@ -223,8 +250,16 @@ namespace Enklu.Mamba.Kinect
                     Type = "update",
                     SchemaType = "vec3",
                     Key = PropPosition,
-                    Value = midPoint
-                }, 
+                    Value = data.JointPositions[JointType.SpineShoulder]
+                },
+                new ElementActionData
+                {
+                    ElementId = elementId,
+                    Type = "update",
+                    SchemaType = "vec3",
+                    Key = PropRotation,
+                    Value = data.JointRotations[JointType.SpineShoulder]
+                }
             });
         }
 
