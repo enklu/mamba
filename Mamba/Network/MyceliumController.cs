@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
-using DotNetty.Common.Concurrency;
 using DotNetty.Transport.Bootstrapping;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
@@ -18,6 +16,8 @@ namespace Enklu.Mamba.Network
     /// <summary>
     /// Controls Mycelium connection.
     /// </summary>
+    /// <inheritdoc cref="IDisposable" />
+    /// <inheritdoc cref="IMyceliumInterface" />
     public class MyceliumController : IDisposable, IMyceliumInterface
     {
         /// <summary>
