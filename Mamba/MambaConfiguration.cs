@@ -62,5 +62,16 @@
                 GraphiteKey = config.GraphiteKey;
             }
         }
+
+        /// <summary>
+        /// ToString.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return
+                $"MyceliumIp: {MyceliumIp}, MyceliumPort: {MyceliumPort}, TrellisUrl: {TrellisUrl}, Token: {Token}, " +
+                $"ExperienceId: {ExperienceId}, GraphiteHost: {GraphiteHost}, GraphiteKey: {GraphiteKey}";
+        }
     }
 }

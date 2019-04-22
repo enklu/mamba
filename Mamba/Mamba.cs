@@ -19,8 +19,6 @@ namespace Enklu.Mamba
         /// </summary>
         static void Main()
         {
-            var config = Configuration();
-
             // logging
             var log = new LoggerConfiguration()
                 .WriteTo.ColoredConsole()
@@ -28,7 +26,10 @@ namespace Enklu.Mamba
                 .CreateLogger();
             Log.Logger = log;
             Log.Information("Logging initialized.");
+            
+            var config = Configuration();
 
+            Log.Information("Configuration: {0}", config);
             Run(config).Wait();
         }
 
@@ -95,9 +96,9 @@ namespace Enklu.Mamba
 
                 config.Override(other);
             }
-            catch
+            catch (Exception e)
             {
-                // ignore
+                Log.Warning($"Failed to load config: {e}");
             }
 
             // override with environment variables
