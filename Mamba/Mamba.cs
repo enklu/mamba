@@ -88,17 +88,8 @@ namespace Enklu.Mamba
             var config = new MambaConfiguration();
 
             // override defaults with app-config.json
-            try
-            {
-                var src = File.ReadAllText("app-config.json");
-                var other = JsonConvert.DeserializeObject<MambaConfiguration>(src);
-
-                config.Override(other);
-            }
-            catch
-            {
-                // ignore
-            }
+            var src = File.ReadAllText("app-config.json");
+            config.Override(JsonConvert.DeserializeObject<MambaConfiguration>(src));
 
             // override with environment variables
             SetFromEnvironment("EXPERIENCE_ID", ref config.ExperienceId, a => a);
