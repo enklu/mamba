@@ -47,7 +47,16 @@ namespace Enklu.Mamba
             }))
             {
                 // load experience first
-                await experience.Initialize();
+                try
+                {
+                    await experience.Initialize();
+                }
+                catch (Exception exception)
+                {
+                    Log.Error($"Could not initialize experience: '{exception}'.");
+
+                    return;
+                }
 
                 using (var network = new MyceliumController(new MyceliumControllerConfiguration
                 {
@@ -99,7 +108,7 @@ namespace Enklu.Mamba
             SetFromEnvironment("MYCELIUM_PORT", ref config.MyceliumPort, int.Parse);
             SetFromEnvironment("GRAPHITE_HOST", ref config.GraphiteHost, a => a);
             SetFromEnvironment("GRAPHITE_KEY", ref config.GraphiteKey, a => a);
-
+            
             return config;
         }
 
