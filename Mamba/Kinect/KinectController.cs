@@ -26,6 +26,11 @@ namespace Enklu.Mamba.Kinect
         /// Elements.
         /// </summary>
         private readonly ElementData _elements;
+
+        /// <summary>
+        /// The element to use for tracking.
+        /// </summary>
+        private string _elementId;
         
         /// <summary>
         /// Kinect Sensor interface. Will exist and be interactable, even with no Kinect present.
@@ -69,6 +74,7 @@ namespace Enklu.Mamba.Kinect
         /// <summary>
         /// Schema values.
         /// </summary>
+        private const string PropKinectId = "kinect.id";
         private const string PropVisible = "visible";
         private const string PropPosition = "position";
         private const string PropRotation = "rotation";
@@ -167,8 +173,17 @@ namespace Enklu.Mamba.Kinect
         {
             if (args.IsAvailable)
             {
-                Log.Information("Kinect available: " + _sensor.UniqueKinectId);
+                Log.Information($"Kinect available ({_sensor.UniqueKinectId})");
+
+                _elementId = FindKinect(_sensor.UniqueKinectId, _elements);
+                if (string.IsNullOrEmpty(_elementId))
+                {
+                    Log.Warning("No Kinect element found in scene.");
+                    return;
+                }
+                Log.Information($"Kinect element found ({_elementId})");
                 
+                // TODO: Build from schema.
                 _trackList = new [] { JointType.SpineShoulder };
                 
                 _bodyCapture?.Stop();
@@ -190,6 +205,8 @@ namespace Enklu.Mamba.Kinect
                 Log.Information("Lost connection to Kinect.");
                 _bodyCapture?.Stop();
 //                _colorCapture?.Stop();
+
+                _elementId = null;
 
                 // TODO: Reset lookup tables
                 HideElements();
@@ -217,7 +234,7 @@ namespace Enklu.Mamba.Kinect
             }
 
             var elementId = _elementPool[0];
-            Log.Information("Body detected (Id={0} Element={1})", id, elementId);
+            Log.Information($"Body detected (Id={id} Element={elementId})");
             
             // Remove from pool, add reservation.
             _bodyElements[id] = elementId;
@@ -301,7 +318,7 @@ namespace Enklu.Mamba.Kinect
                 return;
             }
             
-            Log.Information("Body lost (Id={0} Element={1})", id, elementId);
+            Log.Information($"Body lost (Id={id} Element={elementId})");
 
             // Remove reservation, add back to the pool.
             _bodyElements.Remove(id);
@@ -318,6 +335,32 @@ namespace Enklu.Mamba.Kinect
                     Value = false
                 }, 
             });
+        }
+
+        /// <summary>
+        /// Finds an element with a matching KinectId.
+        /// </summary>
+        /// <param name="kinectId"></param>
+        /// <param name="element"></param>
+        /// <returns></returns>
+        private string FindKinect(string kinectId, ElementData element)
+        {
+            element.Schema.Strings.TryGetValue(PropKinectId, out var schemaId);
+
+            if (schemaId == kinectId)
+            {
+                return element.Id;
+            }
+            
+            for (int i = 0, len = element.Children.Length; i < len; i++)
+            {
+                if (!string.IsNullOrEmpty(FindKinect(kinectId, element.Children[i])))
+                {
+                    return element.Children[i].Id;
+                }
+            }
+
+            return null;
         }
     }
 }
