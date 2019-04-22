@@ -22,12 +22,17 @@ namespace Enklu.Mamba.Kinect
         private readonly List<ulong> _trackedBodies = new List<ulong>();
         private List<ulong> _scratch = new List<ulong>();
 
-        // TODO: Read from config
         private readonly JointType[] _jointsDesired;
         
         public Action<ulong> OnBodyDetected;
         public Action<ulong, SensorData> OnBodyUpdated;
         public Action<ulong> OnBodyLost;
+
+        private SensorData _data = new SensorData
+        {
+            JointPositions = new Dictionary<JointType, Vec3>(),
+            JointRotations = new Dictionary<JointType, Vec3>()
+        };
 
         public BodyCapture(KinectSensor sensor)
         {
@@ -83,11 +88,8 @@ namespace Enklu.Mamba.Kinect
                         _scratch.Remove(bodyId);
                     }
 
-                    var data = new SensorData
-                    {
-                        JointPositions = new Dictionary<JointType, Vec3>(),
-                        JointRotations = new Dictionary<JointType, Vec3>()
-                    };
+                    _data.JointPositions.Clear();
+                    _data.JointRotations.Clear();
 
                     for (var j = 0; j < _jointsDesired.Length; j++)
                     {
@@ -96,14 +98,14 @@ namespace Enklu.Mamba.Kinect
                         
                         if (joint.TrackingState != TrackingState.NotTracked)
                         {
-                            data.JointPositions[type] = new Vec3(-joint.Position.X, joint.Position.Y, joint.Position.Z);
-                            data.JointRotations[type] = Math.QuatToEuler(body.JointOrientations[type].Orientation);
+                            _data.JointPositions[type] = new Vec3(-joint.Position.X, joint.Position.Y, joint.Position.Z);
+                            _data.JointRotations[type] = Math.QuatToEuler(body.JointOrientations[type].Orientation);
                         }
                     }
                     
                     try
                     {
-                        OnBodyUpdated?.Invoke(bodyId, data);
+                        OnBodyUpdated?.Invoke(bodyId, _data);
                     }
                     catch (Exception e)
                     {
