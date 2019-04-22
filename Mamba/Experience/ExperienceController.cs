@@ -124,7 +124,9 @@ namespace Mamba.Experience
 
             Log.Information($"Nope: {response.StatusCode} : {response}");
 
-            throw new Exception(result["error"].Value<string>());
+            var error = result["error"];
+            var errorStr = error != null ? error.Value<string>() : "Unknown error";
+            throw new Exception(errorStr);
         }
 
         public void Dispose()

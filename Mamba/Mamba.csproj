@@ -236,6 +236,9 @@
       <Private>True</Private>
       <Private>True</Private>
     </Reference>
+    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\Lib\UnityEngine.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MambaConfiguration.cs" />
