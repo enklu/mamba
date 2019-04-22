@@ -1,4 +1,6 @@
-﻿namespace Enklu.Mamba
+﻿using Enklu.Mamba.Kinect;
+
+namespace Enklu.Mamba
 {
     /// <summary>
     /// Configuration for Mamba.
@@ -20,6 +22,11 @@
         /// Key to send metrics with.
         /// </summary>
         public string GraphiteKey;
+
+        /// <summary>
+        /// Kinect configuration.
+        /// </summary>
+        public readonly KinectControllerConfiguration Kinect = new KinectControllerConfiguration();
 
         /// <summary>
         /// Overrides settings.
@@ -60,6 +67,11 @@
             if (!string.IsNullOrEmpty(config.GraphiteKey))
             {
                 GraphiteKey = config.GraphiteKey;
+            }
+
+            if (config.Kinect != null)
+            {
+                Kinect.Override(config.Kinect);
             }
         }
 

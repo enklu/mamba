@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using Enklu.Data;
 using Enklu.Mamba.Kinect;
 using Enklu.Mamba.Network;
 using Mamba.Experience;
@@ -47,10 +48,11 @@ namespace Enklu.Mamba
                 TrellisUrl = "https://cloud.enklu.com:10001/v1"
             }))
             {
+                ElementData elements;
                 // load experience first
                 try
                 {
-                    await experience.Initialize();
+                    elements = await experience.Initialize();
                 }
                 catch (Exception exception)
                 {
@@ -66,7 +68,7 @@ namespace Enklu.Mamba
                     Token = config.Token
                 }))
                 {
-                    using (var kinect = new KinectController(new KinectControllerConfiguration(), network))
+                    using (var kinect = new KinectController(new KinectControllerConfiguration(), network, elements))
                     {
                         network.Start();
                         kinect.Start();

@@ -21,6 +21,11 @@ namespace Enklu.Mamba.Kinect
         /// Network interface.
         /// </summary>
         private readonly IMyceliumInterface _network;
+
+        /// <summary>
+        /// Elements.
+        /// </summary>
+        private readonly ElementData _elements;
         
         /// <summary>
         /// Kinect Sensor interface. Will exist and be interactable, even with no Kinect present.
@@ -42,6 +47,11 @@ namespace Enklu.Mamba.Kinect
         /// Map of tracked body ID -> Element Id.
         /// </summary>
         private readonly Dictionary<ulong, string> _bodyElements = new Dictionary<ulong, string>();
+        
+        private readonly Dictionary<ulong, Dictionary<JointType, Vec3>> _jointPositions = new Dictionary<ulong, Dictionary<JointType, Vec3>>();
+        private readonly Dictionary<ulong, Dictionary<JointType, Vec3>> _jointRotations = new Dictionary<ulong, Dictionary<JointType, Vec3>>();
+
+        private JointType[] _trackList;
 
         /// <summary>
         /// Available Elements, hardcoded for now.
@@ -62,17 +72,20 @@ namespace Enklu.Mamba.Kinect
         private const string PropVisible = "visible";
         private const string PropPosition = "position";
         private const string PropRotation = "rotation";
+        
+        private DateTime _lastUpdate = DateTime.Now;
 
         /// <summary>
-        /// Constructor.
+        /// 
         /// </summary>
-        /// <param name="network">The network.</param>
         public KinectController(
             KinectControllerConfiguration config,
-            IMyceliumInterface network)
+            IMyceliumInterface network,
+            ElementData elements)
         {
             _config = config;
             _network = network;
+            _elements = elements;
         }
 
         /// <summary>
@@ -156,6 +169,8 @@ namespace Enklu.Mamba.Kinect
             {
                 Log.Information("Kinect available: " + _sensor.UniqueKinectId);
                 
+                _trackList = new [] { JointType.SpineShoulder };
+                
                 _bodyCapture?.Stop();
                 _bodyCapture = new BodyCapture(_sensor);
                 _bodyCapture.OnBodyDetected += Body_OnDetected;
@@ -228,39 +243,50 @@ namespace Enklu.Mamba.Kinect
         /// <param name="data">Current data for the body.</param>
         private void Body_OnUpdated(ulong id, BodyCapture.SensorData data)
         {
+            if ((DateTime.Now - _lastUpdate).TotalMilliseconds < _config.SendIntervalMs)
+            {
+                return;
+            }
+            
             if (!_bodyElements.TryGetValue(id, out var elementId))
             {
                 Log.Error("Body updated, but was never tracked.");
                 return;
             }
 
-            // TODO: Read from a joint config.
-            if (!data.JointPositions.ContainsKey(JointType.SpineShoulder))
+            var updates = new ElementActionData[_trackList.Length * 2];
+
+            for (int i = 0, len = _trackList.Length; i < len; i++)
             {
-                // Early out if we can't determine a valid position.
-                // TODO: Toggle visibility when this happens.
-                return;
-            }
-            
-            _network.Update(new []
-            {
-                new ElementActionData
+                var jointType = _trackList[i];
+                
+                if (!data.JointPositions.ContainsKey(jointType))
+                {
+                    // Early out if we can't determine a valid position.
+                    // TODO: Toggle visibility when this happens.
+                    return;
+                }
+
+                updates[i * 2] = new ElementActionData
                 {
                     ElementId = elementId,
                     Type = "update",
                     SchemaType = "vec3",
                     Key = PropPosition,
-                    Value = data.JointPositions[JointType.SpineShoulder]
-                },
-                new ElementActionData
+                    Value = data.JointPositions[jointType]
+                };
+
+                updates[i * 2 + 1] = new ElementActionData
                 {
                     ElementId = elementId,
                     Type = "update",
                     SchemaType = "vec3",
                     Key = PropRotation,
-                    Value = data.JointRotations[JointType.SpineShoulder]
-                }
-            });
+                    Value = data.JointRotations[jointType]
+                };
+            }
+            
+            _network.Update(updates);
         }
 
         /// <summary>
