@@ -22,7 +22,7 @@ namespace Enklu.Mamba.Kinect
         private readonly List<ulong> _trackedBodies = new List<ulong>();
         private List<ulong> _scratch = new List<ulong>();
 
-        private readonly JointType[] _jointsDesired;
+        private readonly JointType[] _trackList;
         
         public Action<ulong> OnBodyDetected;
         public Action<ulong, SensorData> OnBodyUpdated;
@@ -34,11 +34,10 @@ namespace Enklu.Mamba.Kinect
             JointRotations = new Dictionary<JointType, Vec3>()
         };
 
-        public BodyCapture(KinectSensor sensor)
+        public BodyCapture(KinectSensor sensor, JointType[] trackList)
         {
             _sensor = sensor;
-
-            _jointsDesired = new[] { JointType.SpineShoulder };
+            _trackList = trackList;
         }
 
         public void Start()
@@ -91,9 +90,9 @@ namespace Enklu.Mamba.Kinect
                     _data.JointPositions.Clear();
                     _data.JointRotations.Clear();
 
-                    for (var j = 0; j < _jointsDesired.Length; j++)
+                    for (var j = 0; j < _trackList.Length; j++)
                     {
-                        var type = _jointsDesired[j];
+                        var type = _trackList[j];
                         var joint = body.Joints[type];
                         
                         if (joint.TrackingState != TrackingState.NotTracked)

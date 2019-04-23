@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Enklu.Data;
 using Enklu.Mamba.Network;
 using Microsoft.Kinect;
@@ -30,7 +31,7 @@ namespace Enklu.Mamba.Kinect
         /// <summary>
         /// The element to use for tracking.
         /// </summary>
-        private string _elementId;
+        private ElementData _kinectElement;
         
         /// <summary>
         /// Kinect Sensor interface. Will exist and be interactable, even with no Kinect present.
@@ -75,6 +76,7 @@ namespace Enklu.Mamba.Kinect
         /// Schema values.
         /// </summary>
         private const string PropKinectId = "kinect.id";
+        private const string PropBodyPrefix = "kinect.body.";
         private const string PropVisible = "visible";
         private const string PropPosition = "position";
         private const string PropRotation = "rotation";
@@ -171,29 +173,39 @@ namespace Enklu.Mamba.Kinect
         /// <param name="args"></param>
         private void SensorOnIsAvailableChanged(object sender, IsAvailableChangedEventArgs args)
         {
+            _bodyCapture?.Stop();
+//            _colorCapture?.Stop();
+            
             if (args.IsAvailable)
             {
+                
+                
                 Log.Information($"Kinect available ({_sensor.UniqueKinectId})");
 
-                _elementId = FindKinect(_sensor.UniqueKinectId, _elements);
-                if (string.IsNullOrEmpty(_elementId))
+                _kinectElement = FindKinect(_sensor.UniqueKinectId, _elements);
+                if (_kinectElement == null)
                 {
                     Log.Warning("No Kinect element found in scene.");
                     return;
                 }
-                Log.Information($"Kinect element found ({_elementId})");
+                Log.Information($"Kinect element found ({_kinectElement})");
+
+                _trackList = BuildTracking(_kinectElement);
+                if (_trackList.Length == 0)
+                {
+                    Log.Warning("No tracking desired?");
+                    return;
+                }
+                Log.Information($"Tracking {_trackList.Length} joints " +
+                                $"({string.Join(", ", _trackList.Select(j => j.ToString()))})");
                 
-                // TODO: Build from schema.
-                _trackList = new [] { JointType.SpineShoulder };
                 
-                _bodyCapture?.Stop();
-                _bodyCapture = new BodyCapture(_sensor);
+                _bodyCapture = new BodyCapture(_sensor, _trackList);
                 _bodyCapture.OnBodyDetected += Body_OnDetected;
                 _bodyCapture.OnBodyUpdated += Body_OnUpdated;
                 _bodyCapture.OnBodyLost += Body_OnLost;
                 _bodyCapture.Start();
 
-//            _colorCapture?.Stop();
 //            _colorCapture = new ColorCapture(_sensor);
 //            _colorCapture.OnImageReady += OnColorImage;
 //            _colorCapture.Start();
@@ -203,10 +215,8 @@ namespace Enklu.Mamba.Kinect
             else if (_active)
             {
                 Log.Information("Lost connection to Kinect.");
-                _bodyCapture?.Stop();
-//                _colorCapture?.Stop();
 
-                _elementId = null;
+                _kinectElement = null;
 
                 // TODO: Reset lookup tables
                 HideElements();
@@ -343,24 +353,51 @@ namespace Enklu.Mamba.Kinect
         /// <param name="kinectId"></param>
         /// <param name="element"></param>
         /// <returns></returns>
-        private string FindKinect(string kinectId, ElementData element)
+        private ElementData FindKinect(string kinectId, ElementData element)
         {
             element.Schema.Strings.TryGetValue(PropKinectId, out var schemaId);
 
             if (schemaId == kinectId)
             {
-                return element.Id;
+                return element;
             }
             
             for (int i = 0, len = element.Children.Length; i < len; i++)
             {
-                if (!string.IsNullOrEmpty(FindKinect(kinectId, element.Children[i])))
+                if (FindKinect(kinectId, element.Children[i]) != null)
                 {
-                    return element.Children[i].Id;
+                    return element.Children[i];
                 }
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Determines which joints to track based on schema.
+        /// </summary>
+        /// <param name="elementData"></param>
+        /// <returns></returns>
+        private JointType[] BuildTracking(ElementData elementData)
+        {
+            var prefixLen = PropBodyPrefix.Length;
+
+            var jointTypes = new List<JointType>();
+            foreach (var kvp in elementData.Schema.Strings)
+            {
+                if (kvp.Key.StartsWith(PropBodyPrefix))
+                {
+                    var bodyPart = kvp.Key.Substring(prefixLen);
+                    bodyPart = bodyPart.Substring(0, bodyPart.IndexOf(".", StringComparison.Ordinal));
+
+                    if (Enum.TryParse<JointType>(bodyPart, true, out var jointType))
+                    {
+                        jointTypes.Add(jointType);
+                    };
+                }
+            }
+
+            return jointTypes.ToArray();
         }
     }
 }
