@@ -104,6 +104,8 @@ namespace Enklu.Mamba.Network
 
             try
             {
+                Log.Information($"Creating element with parent [Id: ${parentId}, Hash: ${_handler.Map.ElementHash(parentId)}");
+
                 return _handler
                     .SendRequest(new CreateElementRequest
                     {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using DotNetty.Transport.Channels;
 using Enklu.Data;
@@ -116,9 +117,22 @@ namespace Enklu.Mamba.Network
             }
             else if (message is SceneDiffEvent diff)
             {
-                Log.Information("Recieved scene diff event.");
+                Log.Information("Received scene diff event.");
 
                 Map = diff.Map;
+            }
+            else if (message is SceneMapUpdateEvent mapUpdate)
+            {
+                Log.Information($"Received scene map update event.");
+
+                var elements = Map.Elements.ToList();
+                elements.AddRange(mapUpdate.ElementsAdded);
+
+                var props = Map.Props.ToList();
+                props.AddRange(mapUpdate.PropsAdded);
+
+                Map.Elements = elements.ToArray();
+                Map.Props = props.ToArray();
             }
             else if (message is RoomResponse res)
             {

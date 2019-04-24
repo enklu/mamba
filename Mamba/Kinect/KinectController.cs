@@ -225,6 +225,7 @@ namespace Enklu.Mamba.Kinect
         private void Body_OnDetected(ulong id)
         {
             Log.Information($"Body detected (Body={id})");
+
             _bodyElements[id] = null;
             
             _network

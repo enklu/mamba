@@ -71,8 +71,6 @@ namespace Mamba.Experience
 
             var response = await _client.GetAsync(url);
             var str = await response.Content.ReadAsStringAsync();
-
-            Log.Information($"Load app: ${str}");
             
             JObject result;
             try
