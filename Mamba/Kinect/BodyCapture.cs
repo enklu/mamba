@@ -22,23 +22,16 @@ namespace Enklu.Mamba.Kinect
         private readonly List<ulong> _trackedBodies = new List<ulong>();
         private List<ulong> _scratch = new List<ulong>();
 
-        private readonly JointType[] _jointsDesired;
+        private readonly JointType[] _trackList;
         
         public Action<ulong> OnBodyDetected;
         public Action<ulong, SensorData> OnBodyUpdated;
         public Action<ulong> OnBodyLost;
 
-        private SensorData _data = new SensorData
-        {
-            JointPositions = new Dictionary<JointType, Vec3>(),
-            JointRotations = new Dictionary<JointType, Vec3>()
-        };
-
-        public BodyCapture(KinectSensor sensor)
+        public BodyCapture(KinectSensor sensor, JointType[] trackList)
         {
             _sensor = sensor;
-
-            _jointsDesired = new[] { JointType.SpineShoulder };
+            _trackList = trackList;
         }
 
         public void Start()
@@ -88,24 +81,28 @@ namespace Enklu.Mamba.Kinect
                         _scratch.Remove(bodyId);
                     }
 
-                    _data.JointPositions.Clear();
-                    _data.JointRotations.Clear();
 
-                    for (var j = 0; j < _jointsDesired.Length; j++)
+                    var data = new SensorData
                     {
-                        var type = _jointsDesired[j];
+                        JointPositions = new Dictionary<JointType, Vec3>(),
+                        JointRotations = new Dictionary<JointType, Vec3>()
+                    };
+
+                    for (var j = 0; j < _trackList.Length; j++)
+                    {
+                        var type = _trackList[j];
                         var joint = body.Joints[type];
                         
                         if (joint.TrackingState != TrackingState.NotTracked)
                         {
-                            _data.JointPositions[type] = new Vec3(-joint.Position.X, joint.Position.Y, joint.Position.Z);
-                            _data.JointRotations[type] = Math.QuatToEuler(body.JointOrientations[type].Orientation);
+                            data.JointPositions[type] = new Vec3(-joint.Position.X, joint.Position.Y, joint.Position.Z);
+                            data.JointRotations[type] = Math.QuatToEuler(body.JointOrientations[type].Orientation);
                         }
                     }
                     
                     try
                     {
-                        OnBodyUpdated?.Invoke(bodyId, _data);
+                        OnBodyUpdated?.Invoke(bodyId, data);
                     }
                     catch (Exception e)
                     {

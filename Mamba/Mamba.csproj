@@ -241,6 +241,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Kinect\Util.cs" />
     <Compile Include="MambaConfiguration.cs" />
     <Compile Include="Experience\ExperienceController.cs" />
     <Compile Include="Kinect\BodyCapture.cs" />
