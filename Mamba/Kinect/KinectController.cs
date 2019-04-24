@@ -105,6 +105,9 @@ namespace Enklu.Mamba.Kinect
             // Super unintuitive - even with no Kinect plugged in, the KinectSensor instance has to be opened
             // to detect a sensor being plugged in at a later time.
             _sensor.Open();
+            
+            // TODO: For testing!
+            Body_OnDetected(8675309);
         }
 
         /// <summary>
