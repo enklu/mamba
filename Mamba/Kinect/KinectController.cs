@@ -105,9 +105,6 @@ namespace Enklu.Mamba.Kinect
             // Super unintuitive - even with no Kinect plugged in, the KinectSensor instance has to be opened
             // to detect a sensor being plugged in at a later time.
             _sensor.Open();
-            
-            // TODO: For testing!
-            Body_OnDetected(8675309);
         }
 
         /// <summary>
@@ -253,7 +250,7 @@ namespace Enklu.Mamba.Kinect
                     for (int i = 0, len = _trackList.Length; i < len; i++)
                     {
                         var jointType = _trackList[i];
-                        jointCreates[i] = _network.Create(_kinectElement.Id, // TODO: Switch to rootElement.Id after bug is fixed 
+                        jointCreates[i] = _network.Create(rootElement.Id, 
                             Util.CreateElementData(jointType.ToString(), _assetMap[jointType]));
                     }
 
