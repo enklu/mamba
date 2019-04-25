@@ -6,7 +6,7 @@ namespace Enklu.Mamba.Kinect
 {
     public static class Math
     {
-        private const float PI = (float) System.Math.PI;
+        private const float Pi = (float) System.Math.PI;
         
         public static Vec3 QuatToEuler(Vector4 q)
         {
@@ -20,9 +20,9 @@ namespace Enklu.Mamba.Kinect
             var roll = (float) System.Math.Atan2(2 * ((q.X * q.Y) + (q.W * q.Z)), (q.W * q.W) + sqx - sqy - sqz);
 
             return new Vec3(
-                pitch * (180 / PI),
-                yaw * (180 / PI),
-                roll * (180 / PI)
+                pitch * (180 / Pi),
+                yaw * (180 / Pi),
+                roll * (180 / Pi)
             );
         }
     }

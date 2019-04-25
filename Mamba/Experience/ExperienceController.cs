@@ -10,45 +10,34 @@ using Serilog;
 
 namespace Mamba.Experience
 {
-    public class ExperienceControllerConfig
-    {
-        public string AppId;
-
-        public string TrellisUrl;
-        public string TrellisToken;
-    }
-
+    /// <summary>
+    /// Controls loading an experience.
+    /// </summary>
     public class ExperienceController : IDisposable
     {
         /// <summary>
-        /// Message from http requests.
+        /// Makes requests.
         /// </summary>
-        private class HttpResponse
-        {
-            /// <summary>
-            /// True iff successful.
-            /// </summary>
-            public bool Success { get; set; }
+        private static readonly HttpClient _Client = new HttpClient();
 
-            /// <summary>
-            /// The error, if <c>Success</c> is false.
-            /// </summary>
-            public string Error { get; set; }
-
-            /// <summary>
-            /// Value to pass along.
-            /// </summary>
-            public object Value { get; set; }
-        }
-
-        private static readonly HttpClient _client = new HttpClient();
+        /// <summary>
+        /// Configuration object.
+        /// </summary>
         private readonly ExperienceControllerConfig _config;
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="config">Configuration object.</param>
         public ExperienceController(ExperienceControllerConfig config)
         {
             _config = config;
         }
 
+        /// <summary>
+        /// Starts the controller, pulling down the data for a scene.
+        /// </summary>
+        /// <returns></returns>
         public async Task<ElementData> Initialize()
         {
             Log.Information($"Loading experience '{_config.AppId}'.");
@@ -59,9 +48,12 @@ namespace Mamba.Experience
             return elements;
         }
 
+        /// <summary>
+        /// Loads the scene id for an app.
+        /// </summary>
         private async Task<string> LoadApp()
         {
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            _Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
                 "Bearer",
                 _config.TrellisToken);
 
@@ -69,7 +61,7 @@ namespace Mamba.Experience
 
             Log.Information($"Starting app load: {url}", new { AppId = _config.AppId });
 
-            var response = await _client.GetAsync(url);
+            var response = await _Client.GetAsync(url);
             var str = await response.Content.ReadAsStringAsync();
             
             JObject result;
@@ -94,13 +86,18 @@ namespace Mamba.Experience
             throw new Exception(result["error"].Value<string>());
         }
 
+        /// <summary>
+        /// Loads the scene data for a specific scene.
+        /// </summary>
+        /// <param name="sceneId">The scene.</param>
+        /// <returns></returns>
         private async Task<ElementData> LoadScene(string sceneId)
         {
             var url = $"{_config.TrellisUrl}/app/{_config.AppId}/scene/{sceneId}";
 
             Log.Information($"Starting scene load load: {url}", new { AppId = _config.AppId });
 
-            var response = await _client.GetAsync(url);
+            var response = await _Client.GetAsync(url);
             var str = await response.Content.ReadAsStringAsync();
 
             JObject result;
@@ -127,9 +124,12 @@ namespace Mamba.Experience
             throw new Exception(errorStr);
         }
 
+        /// <summary>
+        /// Disposes of any resources.
+        /// </summary>
         public void Dispose()
         {
-            //
+            // TODO
         }
     }
 }

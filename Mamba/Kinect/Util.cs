@@ -24,7 +24,7 @@ namespace Enklu.Mamba.Kinect
         {
             var elm = CreateElementData(name);
             elm.Schema.Strings["assetSrc"] = asset;
-            elm.Type = ElementTypes.ASSET;
+            elm.Type = ElementTypes.Asset;
             return elm;
         }
     }
