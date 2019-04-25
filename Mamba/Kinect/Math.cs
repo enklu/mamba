@@ -12,7 +12,7 @@ namespace Enklu.Mamba.Kinect
         /// <summary>
         /// You know it, you love it, it's PI!
         /// </summary>
-        private const float PI = (float) System.Math.PI;
+        private const float Pi = (float) System.Math.PI;
         
         /// <summary>
         /// Converts a quaternion into a Vec3 representing yaw/pitch/roll.
@@ -31,9 +31,9 @@ namespace Enklu.Mamba.Kinect
             var roll = (float) System.Math.Atan2(2 * ((q.X * q.Y) + (q.W * q.Z)), (q.W * q.W) + sqx - sqy - sqz);
 
             return new Vec3(
-                pitch * (180 / PI),
-                yaw * (180 / PI),
-                roll * (180 / PI)
+                pitch * (180 / Pi),
+                yaw * (180 / Pi),
+                roll * (180 / Pi)
             );
         }
     }
