@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Enklu.Data;
+using Enklu.Mamba.Network;
 
 namespace Enklu.Mamba.Kinect
 {
@@ -23,6 +24,7 @@ namespace Enklu.Mamba.Kinect
         {
             var elm = CreateElementData(name);
             elm.Schema.Strings["assetSrc"] = asset;
+            elm.Type = ElementTypes.ASSET;
             return elm;
         }
     }

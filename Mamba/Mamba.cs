@@ -45,7 +45,7 @@ namespace Enklu.Mamba
             {
                 AppId = config.ExperienceId,
                 TrellisToken = config.Token,
-                TrellisUrl = "https://cloud.enklu.com:10001/v1"
+                TrellisUrl = config.TrellisUrl
             }))
             {
                 ElementData elements;

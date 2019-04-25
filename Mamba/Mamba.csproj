@@ -250,6 +250,7 @@
     <Compile Include="Kinect\KinectControllerConfiguration.cs" />
     <Compile Include="Kinect\Math.cs" />
     <Compile Include="Mamba.cs" />
+    <Compile Include="Network\ElementTypes.cs" />
     <Compile Include="Network\IMyceliumInterface.cs" />
     <Compile Include="Network\MyceliumClientHandler.cs" />
     <Compile Include="Network\MyceliumController.cs" />

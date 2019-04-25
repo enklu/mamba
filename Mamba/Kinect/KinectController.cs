@@ -278,10 +278,10 @@ namespace Enklu.Mamba.Kinect
         /// <param name="data">Current data for the body.</param>
         private void Body_OnUpdated(ulong id, BodyCapture.SensorData data)
         {
-            if ((DateTime.Now - _lastUpdate).TotalMilliseconds < _config.SendIntervalMs)
-            {
-                return;
-            }
+//            if ((DateTime.Now - _lastUpdate).TotalMilliseconds < _config.SendIntervalMs)
+//            {
+//                return;
+//            }
             
             if (!_bodyElements.TryGetValue(id, out var bodyElements))
             {
@@ -373,9 +373,10 @@ namespace Enklu.Mamba.Kinect
             
             for (int i = 0, len = element.Children.Length; i < len; i++)
             {
-                if (FindKinect(kinectId, element.Children[i]) != null)
+                var search = FindKinect(kinectId, element.Children[i]);
+                if (search != null)
                 {
-                    return element.Children[i];
+                    return search;
                 }
             }
 
