@@ -21,6 +21,9 @@ namespace Enklu.Mamba.Kinect
 
             public readonly Dictionary<JointType, Vec3> JointPositions = new Dictionary<JointType, Vec3>();
             public readonly Dictionary<JointType, Vec3> JointRotations = new Dictionary<JointType, Vec3>();
+
+            public DateTime LastUpdate = DateTime.MinValue;
+            public bool Visible = true;
         }
         
         /// <summary>
@@ -76,8 +79,6 @@ namespace Enklu.Mamba.Kinect
         private const string PropVisible = "visible";
         private const string PropPosition = "position";
         private const string PropRotation = "rotation";
-        
-        private DateTime _lastUpdate = DateTime.Now;
 
         /// <summary>
         /// 
@@ -278,11 +279,6 @@ namespace Enklu.Mamba.Kinect
         /// <param name="data">Current data for the body.</param>
         private void Body_OnUpdated(ulong id, BodyCapture.SensorData data)
         {
-//            if ((DateTime.Now - _lastUpdate).TotalMilliseconds < _config.SendIntervalMs)
-//            {
-//                return;
-//            }
-            
             if (!_bodyElements.TryGetValue(id, out var bodyElements))
             {
                 Log.Error("Body updated, but was never tracked.");
@@ -292,6 +288,11 @@ namespace Enklu.Mamba.Kinect
             if (bodyElements == null)
             {
                 return; // This is okay, Elements are in flight.
+            }
+            
+            if ((DateTime.Now - bodyElements.LastUpdate).TotalMilliseconds < _config.SendIntervalMs)
+            {
+                return;
             }
 
             const int stride = 2;
@@ -303,8 +304,19 @@ namespace Enklu.Mamba.Kinect
                 
                 if (!data.JointPositions.ContainsKey(jointType))
                 {
-                    // Early out if we can't determine a valid position.
-                    // TODO: Toggle visibility when this happens.
+                    // If there's invalid data and the body is visible, hide it!
+                    if (bodyElements.Visible)
+                    {
+                        _network.Update(new [] { new ElementActionData
+                        {
+                           ElementId = bodyElements.RootElement.Id,
+                           Type = "update",
+                           SchemaType = "bool",
+                           Key = PropVisible,
+                           Value = false
+                        }});
+                        bodyElements.Visible = false;
+                    }
                     return;
                 }
 
@@ -326,9 +338,25 @@ namespace Enklu.Mamba.Kinect
                     Value = data.JointRotations[jointType]
                 };
             }
+
+            // If previously hidden, unhide!
+            if (!bodyElements.Visible)
+            {
+                var tmp = new ElementActionData[updates.Length + 1];
+                Array.Copy(updates, tmp, updates.Length);
+                updates = tmp;
+                updates[updates.Length] = new ElementActionData
+                {
+                    ElementId = bodyElements.RootElement.Id,
+                    Type = "update",
+                    SchemaType = "bool",
+                    Key = PropVisible,
+                    Value = true
+                };
+            }
             
             _network.Update(updates);
-            _lastUpdate = DateTime.Now;
+            bodyElements.LastUpdate = DateTime.Now;
         }
 
         /// <summary>
