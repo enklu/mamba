@@ -380,7 +380,20 @@ namespace Enklu.Mamba.Kinect
             else
             {
                 Log.Information($"Body lost. Destroying element (Body={id}, Element={bodyElements.RootElement.Id})");
-                _network.Destroy(bodyElements.RootElement.Id);
+                try
+                {
+                    _network
+                        .Destroy(bodyElements.RootElement.Id)
+                        .ContinueWith(_ =>
+                        {
+                            Log.Information($"Destruction successful (Element={bodyElements.RootElement.Id}");
+                        });
+                }
+                catch (Exception e)
+                {
+                    Log.Error($"Error destroying body (Element={bodyElements.RootElement.Id}, Exception={e}");
+                }
+                
             }
 
             _bodyElements.Remove(id);
