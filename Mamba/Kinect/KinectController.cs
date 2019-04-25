@@ -227,7 +227,7 @@ namespace Enklu.Mamba.Kinect
         /// <param name="id">Unique ID of the body.</param>
         private void Body_OnDetected(ulong id)
         {
-            Log.Information($"Body detected (Body={id})");
+            Log.Information($"Body detected, creating body elements (Body={id}).");
 
             _bodyElements[id] = null;
             
@@ -237,12 +237,12 @@ namespace Enklu.Mamba.Kinect
                 {
                     var rootElement = task.Result;
                     
-                    Log.Information($"Element created (Body={id} Element={rootElement.Id})");
+                    Log.Information($"Created body root element (Body={id} Element={rootElement.Id}).");
                     
                     // Double check the body didn't disappear during the network op
                     if (!_bodyElements.ContainsKey(id))
                     {
-                        Log.Information($"Matching body already gone. Destroying (Body={id} Element={rootElement.Id})");
+                        Log.Information($"Matching body already gone. Destroying (Body={id} Element={rootElement.Id}).");
                         _network.Destroy(rootElement.Id);
                         return;
                     }
@@ -251,6 +251,7 @@ namespace Enklu.Mamba.Kinect
                     bodyElements.RootElement = rootElement;
 
                     var jointCreates = new Task<ElementData>[_trackList.Length];
+                    Log.Information($"Creating {jointCreates.Length} joint elements (Body={id}).");
                     for (int i = 0, len = _trackList.Length; i < len; i++)
                     {
                         var jointType = _trackList[i];
@@ -258,16 +259,19 @@ namespace Enklu.Mamba.Kinect
                             Util.CreateElementData(jointType.ToString(), _assetMap[jointType]));
                     }
 
-                    Task.WhenAll(jointCreates)
+                    Task
+                        .WhenAll(jointCreates)
                         .ContinueWith(_ =>
                         {
-                            Log.Information($"All joint elements created (Element={rootElement.Id})");
-                            
-                            
                             for (int i = 0, len = _trackList.Length; i < len; i++)
                             {
-                                bodyElements.JointElements[_trackList[i]] = jointCreates[i].Result;
+                                var element = jointCreates[i].Result;
+                                Log.Information($"Created joint element (Body={id}, Element={element.Id})");
+
+                                bodyElements.JointElements[_trackList[i]] = element;
                             }
+
+                            Log.Information($"All joint elements created (Body={id})");
 
                             _bodyElements[id] = bodyElements;
                         });
