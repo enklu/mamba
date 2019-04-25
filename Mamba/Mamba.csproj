@@ -245,7 +245,6 @@
     <Compile Include="MambaConfiguration.cs" />
     <Compile Include="Experience\ExperienceController.cs" />
     <Compile Include="Kinect\BodyCapture.cs" />
-    <Compile Include="Kinect\ColorCapture.cs" />
     <Compile Include="Kinect\KinectController.cs" />
     <Compile Include="Kinect\KinectControllerConfiguration.cs" />
     <Compile Include="Kinect\Math.cs" />

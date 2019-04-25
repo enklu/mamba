@@ -6,34 +6,77 @@ using Serilog;
 
 namespace Enklu.Mamba.Kinect
 {
+    /// <summary>
+    /// Reads configurable Body data from a Kinect.
+    /// </summary>
     public class BodyCapture
     {
+        /// <summary>
+        /// Per-body data.
+        /// </summary>
         public struct SensorData
         {
             public Dictionary<JointType, Vec3> JointPositions;
             public Dictionary<JointType, Vec3> JointRotations;
         }
         
+        /// <summary>
+        /// Kinect API.
+        /// </summary>
         private readonly KinectSensor _sensor;
+        
+        /// <summary>
+        /// Active body data reader.
+        /// </summary>
         private BodyFrameReader _reader;
         
+        /// <summary>
+        /// Stores body data as it comes in.
+        /// </summary>
         private readonly Body[] _bodyData = new Body[6];
         
+        /// <summary>
+        /// The current known body IDs.
+        /// </summary>
         private readonly List<ulong> _trackedBodies = new List<ulong>();
+        
+        /// <summary>
+        /// The current body IDs per update cycle.
+        /// </summary>
         private List<ulong> _scratch = new List<ulong>();
 
+        /// <summary>
+        /// The list of joints to track.
+        /// </summary>
         private readonly JointType[] _trackList;
         
+        /// <summary>
+        /// Invoked when a new body is detected.
+        /// </summary>
         public Action<ulong> OnBodyDetected;
+        
+        /// <summary>
+        /// Invoked when a body data is available.
+        /// </summary>
         public Action<ulong, SensorData> OnBodyUpdated;
+        
+        /// <summary>
+        /// Invoked when a body is lost.
+        /// </summary>
         public Action<ulong> OnBodyLost;
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
         public BodyCapture(KinectSensor sensor, JointType[] trackList)
         {
             _sensor = sensor;
             _trackList = trackList;
         }
 
+        /// <summary>
+        /// Starts reading data from the Kinect.
+        /// </summary>
         public void Start()
         {
             Log.Information("BodyCapture: Start");
@@ -41,12 +84,18 @@ namespace Enklu.Mamba.Kinect
             _reader.FrameArrived += Reader_OnFrameArrived;
         }
 
+        /// <summary>
+        /// Stops reading data from the Kinect.
+        /// </summary>
         public void Stop()
         {
             Log.Information("BodyCapture: Stop");
             _reader.Dispose();
         }
 
+        /// <summary>
+        /// Invoked when Body data is available.
+        /// </summary>
         private void Reader_OnFrameArrived(object obj, BodyFrameArrivedEventArgs args)
         {
             var frameRef = args.FrameReference;
@@ -56,6 +105,7 @@ namespace Enklu.Mamba.Kinect
             
             bodyFrame.GetAndRefreshBodyData(_bodyData);
         
+            // Scratch list maintains current bodies, and removes them as they're updated.
             _scratch = new List<ulong>(_trackedBodies);
             for (var i = 0; i < _bodyData.Length; i++)
             {
@@ -64,6 +114,7 @@ namespace Enklu.Mamba.Kinect
                 {
                     var bodyId = body.TrackingId;
                     
+                    // Handle new bodies
                     if (!_scratch.Contains(bodyId))
                     {
                         try
@@ -78,9 +129,9 @@ namespace Enklu.Mamba.Kinect
                     }
                     else
                     {
+                        // Remove existing ones from scratch
                         _scratch.Remove(bodyId);
                     }
-
 
                     var data = new SensorData
                     {
@@ -111,6 +162,7 @@ namespace Enklu.Mamba.Kinect
                 }
             }
 
+            // Leftover scratch entries are lost bodies. Remove tracking & notify listeners.
             for (var i = 0; i < _scratch.Count; i++)
             {
                 var id = _scratch[i];

@@ -14,15 +14,35 @@ namespace Enklu.Mamba.Kinect
     /// </summary>
     public class KinectController : IDisposable
     {
+        /// <summary>
+        /// Related Elements for each body.
+        /// </summary>
         private class BodyElements
         {
+            /// <summary>
+            /// The root Element all joints position under.
+            /// </summary>
             public ElementData RootElement;
+            
+            /// <summary>
+            /// The Elements for each joint.
+            /// </summary>
             public readonly Dictionary<JointType, ElementData> JointElements = new Dictionary<JointType, ElementData>();
 
+            /// <summary>
+            /// Last joint transforms, used in delta throttling.
+            /// </summary>
             public readonly Dictionary<JointType, Vec3> JointPositions = new Dictionary<JointType, Vec3>();
             public readonly Dictionary<JointType, Vec3> JointRotations = new Dictionary<JointType, Vec3>();
 
+            /// <summary>
+            /// Last update time.
+            /// </summary>
             public DateTime LastUpdate = DateTime.MinValue;
+            
+            /// <summary>
+            /// The current visibility state.
+            /// </summary>
             public bool Visible = true;
         }
         
@@ -67,8 +87,14 @@ namespace Enklu.Mamba.Kinect
         /// </summary>
         private readonly Dictionary<ulong, BodyElements> _bodyElements = new Dictionary<ulong, BodyElements>();
 
+        /// <summary>
+        /// The joints the current Kinect Element needs to track.
+        /// </summary>
         private JointType[] _trackList;
 
+        /// <summary>
+        /// The corresponding Assets for each JointType.
+        /// </summary>
         private Dictionary<JointType, string> _assetMap;
 
         /// <summary>
@@ -81,7 +107,7 @@ namespace Enklu.Mamba.Kinect
         private const string PropRotation = "rotation";
 
         /// <summary>
-        /// 
+        /// Constructor.
         /// </summary>
         public KinectController(
             KinectControllerConfiguration config,
@@ -121,8 +147,6 @@ namespace Enklu.Mamba.Kinect
         /// </summary>
         public void Dispose()
         {
-            // Kind of a hail mary. Network might have already been disposed :(
-            HideElements();
             ReleaseUnmanagedResources();
             GC.SuppressFinalize(this);
         }
@@ -138,28 +162,6 @@ namespace Enklu.Mamba.Kinect
             }
             
             _sensor.Close();
-        }
-
-        /// <summary>
-        /// Sets the visibility of all pooled elements to false.
-        /// </summary>
-        private void HideElements()
-        {
-//            var hideData = new ElementActionData[_elementPool.Count];
-//
-//            for (var i = 0; i < _elementPool.Count; i++)
-//            {
-//                hideData[i] = new ElementActionData
-//                {
-//                    ElementId = _elementPool[i],
-//                    Type = "update",
-//                    SchemaType = "bool",
-//                    Key = PropVisible,
-//                    Value = false,
-//                };
-//            }
-//            
-//            _network.Update(hideData);
         }
         
         /// <summary>
@@ -292,7 +294,7 @@ namespace Enklu.Mamba.Kinect
             
             if ((DateTime.Now - bodyElements.LastUpdate).TotalMilliseconds < _config.SendIntervalMs)
             {
-                return;
+                return; // Time throttling
             }
 
             const int stride = 2;

@@ -20,6 +20,10 @@
         /// </summary>
         public float RotationThresholdDeg = 5;
 
+        /// <summary>
+        /// Overrides the configuration.
+        /// </summary>
+        /// <param name="config">Config to override with</param>
         public void Override(KinectControllerConfiguration config)
         {
             if (config.SendIntervalMs > float.Epsilon)

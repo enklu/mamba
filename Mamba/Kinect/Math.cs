@@ -4,10 +4,21 @@ using Microsoft.Kinect;
 
 namespace Enklu.Mamba.Kinect
 {
+    /// <summary>
+    /// Math helpers.
+    /// </summary>
     public static class Math
     {
+        /// <summary>
+        /// You know it, you love it, it's PI!
+        /// </summary>
         private const float PI = (float) System.Math.PI;
         
+        /// <summary>
+        /// Converts a quaternion into a Vec3 representing yaw/pitch/roll.
+        /// </summary>
+        /// <param name="q"></param>
+        /// <returns></returns>
         public static Vec3 QuatToEuler(Vector4 q)
         {
             double sqw = q.W * q.W;
