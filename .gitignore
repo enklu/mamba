@@ -4,3 +4,5 @@
 bin
 obj
 packages/
+.idea/
+*app-config.json

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Threading.Tasks;
 using DotNetty.Transport.Bootstrapping;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Sockets;
@@ -15,13 +16,15 @@ namespace Enklu.Mamba.Network
     /// <summary>
     /// Controls Mycelium connection.
     /// </summary>
+    /// <inheritdoc cref="IDisposable" />
+    /// <inheritdoc cref="IMyceliumInterface" />
     public class MyceliumController : IDisposable, IMyceliumInterface
     {
         /// <summary>
         /// Configuration for Mycelium connection.
         /// </summary>
         private readonly MyceliumControllerConfiguration _config;
-
+        
         /// <summary>
         /// Creates channels.
         /// </summary>
@@ -89,25 +92,42 @@ namespace Enklu.Mamba.Network
 
             Connect();
         }
-
+        
         /// <inheritdoc />
-        public void Create(string parentId, ElementData element)
+        public Task<ElementData> Create(
+            string parentId,
+            ElementData element,
+            string owner = null,
+            ElementExpirationType expiration = ElementExpirationType.Session)
         {
+            OverwriteIds(element);
+
             try
             {
-                _handler.Send(new CreateElementRequest
-                {
-                    Element = element,
-                    ParentId = _handler.Map.ElementHash(parentId)
-                });
+                Log.Information($"Creating element with parent [Id: ${parentId}, Hash: ${_handler.Map.ElementHash(parentId)}");
+
+                return _handler
+                    .SendRequest(new CreateElementRequest
+                    {
+                        ParentHash = _handler.Map.ElementHash(parentId),
+                        Element = element,
+                        Owner = owner,
+                        Expiration = expiration
+                    })
+                    .ContinueWith(task =>
+                    {
+                        if (task.Result.Success)
+                        {
+                            return element;
+                        }
+
+                        throw new Exception("Could not create element.");
+                    });
             }
             catch (NullReferenceException)
             {
                 // handler may be null
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"Could not send create event: {ex.Message}");
+                throw new Exception("Mycelium is disconnected.");
             }
         }
 
@@ -133,9 +153,30 @@ namespace Enklu.Mamba.Network
         }
         
         /// <inheritdoc />
-        public void Destroy(string id)
+        public Task Destroy(string id)
         {
-            // TODO
+            try
+            {
+                return _handler
+                    .SendRequest(new DeleteElementRequest
+                    {
+                        ElementHash = _handler.Map.ElementHash(id)
+                    })
+                    .ContinueWith(task =>
+                    {
+                        if (task.Result.Success)
+                        {
+                            return;
+                        }
+
+                        throw new Exception("Could not create element.");
+                    });
+            }
+            catch (NullReferenceException)
+            {
+                // handler may be null
+                throw new Exception("Mycelium is disconnected.");
+            }
         }
 
         /// <summary>
@@ -240,6 +281,20 @@ namespace Enklu.Mamba.Network
                     throw new Exception(
                         $"Could not creaate update event for unknown schema type '{action.SchemaType}'.");
                 }
+            }
+        }
+
+        /// <summary>
+        /// Updates ids.
+        /// </summary>
+        /// <param name="data">Ids.</param>
+        private void OverwriteIds(ElementData data)
+        {
+            data.Id = Guid.NewGuid().ToString();
+
+            foreach (var child in data.Children)
+            {
+                OverwriteIds(child);
             }
         }
 

@@ -1,27 +1,15 @@
 ﻿using System;
+using System.IO;
 using System.Threading.Tasks;
-using CommandLine;
+using Enklu.Data;
 using Enklu.Mamba.Kinect;
 using Enklu.Mamba.Network;
+using Mamba.Experience;
+using Newtonsoft.Json;
 using Serilog;
 
 namespace Enklu.Mamba
 {
-    /// <summary>
-    /// Command line options.
-    /// </summary>
-    public class Options
-    {
-        [Option('i', "ip", Default = "34.216.59.227", HelpText = "IP of Mycelium instance to connect to.")]
-        public string MyceliumIp { get; set; }
-
-        [Option('p', "port", Default = 10103, HelpText = "Port of Mycelium instance to connect to.")]
-        public int MyceliumPort { get; set; }
-
-        [Option('t', "token", Required = true, HelpText = "Login token issued from Trellis.")]
-        public string LoginToken { get; set; }
-    }
-
     /// <summary>
     /// Entry point.
     /// </summary>
@@ -30,7 +18,7 @@ namespace Enklu.Mamba
         /// <summary>
         /// Main.
         /// </summary>
-        static void Main(params string[] argv)
+        static void Main()
         {
             // logging
             var log = new LoggerConfiguration()
@@ -39,37 +27,98 @@ namespace Enklu.Mamba
                 .CreateLogger();
             Log.Logger = log;
             Log.Information("Logging initialized.");
+            
+            var config = Configuration();
 
-            // parse
-            Parser
-                .Default
-                .ParseArguments<Options>(argv)
-                .WithParsed(o => Run(o).Wait());
+            Log.Information("Configuration: {0}", config);
+            Run(config).Wait();
         }
 
         /// <summary>
         /// Starts the application.
         /// </summary>
-        /// <param name="options">Options to run with.</param>
+        /// <param name="config">Options to run with.</param>
         /// <returns></returns>
-        private static async Task Run(Options options)
+        private static async Task Run(MambaConfiguration config)
         {
-            using (var network = new MyceliumController(new MyceliumControllerConfiguration
+            using (var experience = new ExperienceController(new ExperienceControllerConfig
             {
-                Ip = options.MyceliumIp,
-                Port = options.MyceliumPort,
-                Token = options.LoginToken
+                AppId = config.ExperienceId,
+                TrellisToken = config.Token,
+                TrellisUrl = config.TrellisUrl
             }))
             {
-                using (var kinect = new KinectController(new KinectControllerConfiguration(), network))
+                ElementData elements;
+                // load experience first
+                try
                 {
-                    network.Start();
-                    kinect.Start();
-
-                    Console.ReadLine();
-
-                    Log.Information("Shutting down.");
+                    elements = await experience.Initialize();
                 }
+                catch (Exception exception)
+                {
+                    Log.Error($"Could not initialize experience: '{exception}'.");
+
+                    return;
+                }
+
+                using (var network = new MyceliumController(new MyceliumControllerConfiguration
+                {
+                    Ip = config.MyceliumIp,
+                    Port = config.MyceliumPort,
+                    Token = config.Token
+                }))
+                {
+                    using (var kinect = new KinectController(new KinectControllerConfiguration(), network, elements))
+                    {
+                        network.Start();
+                        kinect.Start();
+
+                        Console.ReadLine();
+
+                        Log.Information("Shutting down.");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Creates an AppActorConfiguration.
+        /// </summary>
+        /// <returns></returns>
+        private static MambaConfiguration Configuration()
+        {
+            // construct the application config
+            var config = new MambaConfiguration();
+
+            // override defaults with app-config.json
+            var src = File.ReadAllText("app-config.json");
+            config.Override(JsonConvert.DeserializeObject<MambaConfiguration>(src));
+
+            // override with environment variables
+            SetFromEnvironment("EXPERIENCE_ID", ref config.ExperienceId, a => a);
+            SetFromEnvironment("TRELLIS_URL", ref config.TrellisUrl, a => a);
+            SetFromEnvironment("TRELLIS_TOKEN", ref config.Token, a => a);
+            SetFromEnvironment("MYCELIUM_IP", ref config.MyceliumIp, a => a);
+            SetFromEnvironment("MYCELIUM_PORT", ref config.MyceliumPort, int.Parse);
+            SetFromEnvironment("GRAPHITE_HOST", ref config.GraphiteHost, a => a);
+            SetFromEnvironment("GRAPHITE_KEY", ref config.GraphiteKey, a => a);
+            
+            return config;
+        }
+
+        /// <summary>
+        /// Sets a value from an environment variable.
+        /// </summary>
+        /// <typeparam name="T">The type of prop to set.</typeparam>
+        /// <param name="name">The name of the environment variable.</param>
+        /// <param name="prop">A reference to the field.<param>
+        /// <param name="converter">A function that converts from string to the required type.</param>
+        private static void SetFromEnvironment<T>(string name, ref T prop, Func<string, T> converter)
+        {
+            var value = Environment.GetEnvironmentVariable(name);
+            if (!string.IsNullOrEmpty(value))
+            {
+                prop = converter(value);
             }
         }
     }
