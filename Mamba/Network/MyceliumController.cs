@@ -136,9 +136,24 @@ namespace Enklu.Mamba.Network
         {
             foreach (var action in actions)
             {
+                var elementHash = _handler.Map.ElementHash(action.ElementId);
+                var propHash = _handler.Map.PropHash(action.Key);
+
+                if (0 == elementHash)
+                {
+                    Log.Warning($"Could not find element hash for ${action.ElementId}.");
+                    return;
+                }
+
+                if (0 == propHash)
+                {
+                    Log.Warning($"Could not find prop hash for ${action.Key}.");
+                    return;
+                }
+
                 try
                 {
-                    _handler.Send(ToEvent(action));
+                    _handler.Send(ToEvent(elementHash, propHash, action));
                 }
                 catch (NullReferenceException)
                 {
@@ -216,9 +231,11 @@ namespace Enklu.Mamba.Network
         /// <summary>
         /// Creates an event from an action.
         /// </summary>
+        /// <param name="elementHash">The id of the element.</param>
+        /// <param name="propHash">The id of the hash.</param>
         /// <param name="action">The action.</param>
         /// <returns></returns>
-        private UpdateElementEvent ToEvent(ElementActionData action)
+        private static UpdateElementEvent ToEvent(ushort elementHash, ushort propHash, ElementActionData action)
         {
             switch (action.SchemaType)
             {
@@ -226,54 +243,54 @@ namespace Enklu.Mamba.Network
                 {
                     return new UpdateElementBoolEvent
                     {
-                        ElementHash = _handler.Map.ElementHash(action.ElementId),
-                        PropHash = _handler.Map.PropHash(action.Key),
-                        Value = (bool)action.Value
+                        ElementHash = elementHash,
+                        PropHash = propHash,
+                        Value = (bool) action.Value
                     };
                 }
                 case ElementActionSchemaTypes.COL4:
                 {
                     return new UpdateElementCol4Event
                     {
-                        ElementHash = _handler.Map.ElementHash(action.ElementId),
-                        PropHash = _handler.Map.PropHash(action.Key),
-                        Value = (Col4)action.Value
+                        ElementHash = elementHash,
+                        PropHash = propHash,
+                        Value = (Col4) action.Value
                     };
                 }
                 case ElementActionSchemaTypes.FLOAT:
                 {
                     return new UpdateElementFloatEvent
                     {
-                        ElementHash = _handler.Map.ElementHash(action.ElementId),
-                        PropHash = _handler.Map.PropHash(action.Key),
-                        Value = (float)action.Value
+                        ElementHash = elementHash,
+                        PropHash = propHash,
+                        Value = (float) action.Value
                     };
                 }
                 case ElementActionSchemaTypes.INT:
                 {
                     return new UpdateElementIntEvent
                     {
-                        ElementHash = _handler.Map.ElementHash(action.ElementId),
-                        PropHash = _handler.Map.PropHash(action.Key),
-                        Value = (int)action.Value
+                        ElementHash = elementHash,
+                        PropHash = propHash,
+                        Value = (int) action.Value
                     };
                 }
                 case ElementActionSchemaTypes.STRING:
                 {
                     return new UpdateElementStringEvent
                     {
-                        ElementHash = _handler.Map.ElementHash(action.ElementId),
-                        PropHash = _handler.Map.PropHash(action.Key),
-                        Value = (string)action.Value
+                        ElementHash = elementHash,
+                        PropHash = propHash,
+                        Value = (string) action.Value
                     };
                 }
                 case ElementActionSchemaTypes.VEC3:
                 {
                     return new UpdateElementVec3Event
                     {
-                        ElementHash = _handler.Map.ElementHash(action.ElementId),
-                        PropHash = _handler.Map.PropHash(action.Key),
-                        Value = (Vec3)action.Value
+                        ElementHash = elementHash,
+                        PropHash = propHash,
+                        Value = (Vec3) action.Value
                     };
                 }
                 default:
@@ -288,7 +305,7 @@ namespace Enklu.Mamba.Network
         /// Updates ids.
         /// </summary>
         /// <param name="data">Ids.</param>
-        private void OverwriteIds(ElementData data)
+        private static void OverwriteIds(ElementData data)
         {
             data.Id = Guid.NewGuid().ToString();
 
@@ -315,9 +332,7 @@ namespace Enklu.Mamba.Network
                 .Wait();
         }
 
-        /// <summary>
-        /// <c>IDisposable</c> implementation.
-        /// </summary>
+        /// <inheritdoc />
         public void Dispose()
         {
             ReleaseUnmanagedResources();
