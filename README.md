@@ -1,5 +1,7 @@
 # Mamba
 
+[![Join the chat at https://gitter.im/enklu/mamba](https://badges.gitter.im/enklu/mamba.svg)](https://gitter.im/enklu/mamba?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 *Why is this named mamba?* My friend, the Black Mamba can see infrared-- JUST LIKE A KINECT! Get it? Did you get it...?
 
 
