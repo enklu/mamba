@@ -7,7 +7,8 @@
 
 ### Development Setup
 
-Requires .NET Framework 4.7.1.
+* .NET Framework 4.7.1.
+* Kinect v2.
 
 Simply open the solution and build. Enklu Nuget packages will be resolved from public Nuget feed.
 
