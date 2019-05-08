@@ -11,7 +11,7 @@ namespace Enklu.Mamba.Util
         /// <inheritdoc />
         public void TrackMessageSize(int size)
         {
-
+            // 
         }
 
         /// <inheritdoc />
@@ -29,7 +29,7 @@ namespace Enklu.Mamba.Util
         /// <inheritdoc />
         public void Dispose()
         {
-            //
+            // 
         }
     }
 }
