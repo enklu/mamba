@@ -4,6 +4,8 @@
 
 *Why is this named mamba?* My friend, the Black Mamba can see infrared-- JUST LIKE A KINECT! Get it? Did you get it...?
 
+![Wings](docs/wings.gif)
+
 
 ### Development Setup
 
