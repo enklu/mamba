@@ -100,8 +100,6 @@ namespace Enklu.Mamba.Kinect
         /// <summary>
         /// Schema values.
         /// </summary>
-        private const string PropKinectId = "kinect.id";
-        private const string PropBodyPrefix = "kinect.body.";
         private const string PropVisible = "visible";
         private const string PropPosition = "position";
         private const string PropRotation = "rotation";
@@ -177,7 +175,7 @@ namespace Enklu.Mamba.Kinect
             {
                 Log.Information($"Kinect available ({_sensor.UniqueKinectId})");
 
-                _kinectElement = FindKinect(_sensor.UniqueKinectId, _elements);
+                _kinectElement = Util.FindKinect(_sensor.UniqueKinectId, _elements);
                 if (_kinectElement == null)
                 {
                     Log.Warning("No Kinect element found in scene.");
@@ -185,7 +183,7 @@ namespace Enklu.Mamba.Kinect
                 }
                 Log.Information($"Kinect element found ({_kinectElement})");
 
-                _assetMap = BuildTracking(_kinectElement);
+                _assetMap = Util.BuildTracking(_kinectElement);
                 _trackList = _assetMap.Keys.Select(j => j).ToArray();
                 if (_trackList.Length == 0)
                 {
@@ -213,7 +211,7 @@ namespace Enklu.Mamba.Kinect
 
                 foreach (var bodyElements in _bodyElements.Values)
                 {
-                    if (bodyElements != null) _network.Destroy(bodyElements.RootElement.Id);
+                    if (bodyElements != null) DestroyBody(bodyElements);
                 }
                 _bodyElements.Clear();
                 
@@ -383,78 +381,29 @@ namespace Enklu.Mamba.Kinect
             }
             else
             {
-                Log.Information($"Body lost. Destroying element (Body={id}, Element={bodyElements.RootElement.Id})");
-                try
-                {
-                    _network
-                        .Destroy(bodyElements.RootElement.Id)
-                        .ContinueWith(_ =>
-                        {
-                            Log.Information($"Destruction successful (Element={bodyElements.RootElement.Id}");
-                        });
-                }
-                catch (Exception e)
-                {
-                    Log.Error($"Error destroying body (Element={bodyElements.RootElement.Id}, Exception={e}");
-                }
-                
+                Log.Information("Body lost.");
+                DestroyBody(bodyElements);
             }
 
             _bodyElements.Remove(id);
         }
 
-        /// <summary>
-        /// Finds an element with a matching KinectId.
-        /// </summary>
-        /// <param name="kinectId"></param>
-        /// <param name="element"></param>
-        /// <returns></returns>
-        private static ElementData FindKinect(string kinectId, ElementData element)
+        private void DestroyBody(BodyElements body)
         {
-            element.Schema.Strings.TryGetValue(PropKinectId, out var schemaId);
-
-            if (schemaId == kinectId)
+            Log.Information($"Destroying body (Element={body.RootElement.Id})");
+            try
             {
-                return element;
-            }
-            
-            for (int i = 0, len = element.Children.Length; i < len; i++)
-            {
-                var search = FindKinect(kinectId, element.Children[i]);
-                if (search != null)
-                {
-                    return search;
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Determines which joints to track based on schema, and their corresponding assets
-        /// </summary>
-        /// <param name="elementData"></param>
-        /// <returns></returns>
-        private static Dictionary<JointType, string> BuildTracking(ElementData elementData)
-        {
-            var prefixLen = PropBodyPrefix.Length;
-
-            var jointMap = new Dictionary<JointType, string>();
-            foreach (var kvp in elementData.Schema.Strings)
-            {
-                if (kvp.Key.StartsWith(PropBodyPrefix))
-                {
-                    var bodyPart = kvp.Key.Substring(prefixLen);
-                    bodyPart = bodyPart.Substring(0, bodyPart.IndexOf(".", StringComparison.Ordinal));
-
-                    if (Enum.TryParse<JointType>(bodyPart, true, out var jointType))
+                _network
+                    .Destroy(body.RootElement.Id)
+                    .ContinueWith(_ =>
                     {
-                        jointMap[jointType] = kvp.Value;
-                    }
-                }
+                        Log.Information($"Destruction successful (Element={body.RootElement.Id}");
+                    });
             }
-
-            return jointMap;
+            catch (Exception e)
+            {
+                Log.Error($"Error destroying body (Element={body.RootElement.Id}, Exception={e}");
+            }
         }
     }
 }
