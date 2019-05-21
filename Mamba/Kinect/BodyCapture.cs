@@ -66,6 +66,16 @@ namespace Enklu.Mamba.Kinect
         public Action<ulong> OnBodyLost;
 
         /// <summary>
+        /// Invoked at the start of a set of body updates.
+        /// </summary>
+        public Action OnFrameStart;
+
+        /// <summary>
+        /// Invoked at the end of a set of body updates.
+        /// </summary>
+        public Action OnFrameEnd;
+
+        /// <summary>
         /// Constructor.
         /// </summary>
         public BodyCapture(KinectSensor sensor, JointType[] trackList)
@@ -104,6 +114,8 @@ namespace Enklu.Mamba.Kinect
             if (bodyFrame == null) return;
             
             bodyFrame.GetAndRefreshBodyData(_bodyData);
+            
+            OnFrameStart?.Invoke();
         
             // Scratch list maintains current bodies, and removes them as they're updated.
             _scratch = new List<ulong>(_trackedBodies);
@@ -178,6 +190,8 @@ namespace Enklu.Mamba.Kinect
                 
                 _trackedBodies.Remove(id);
             }
+            
+            OnFrameEnd?.Invoke();
             
             bodyFrame.Dispose();
         }

@@ -28,17 +28,6 @@ namespace Enklu.Mamba.Kinect
             /// The Elements for each joint.
             /// </summary>
             public readonly Dictionary<JointType, ElementData> JointElements = new Dictionary<JointType, ElementData>();
-
-            /// <summary>
-            /// Last joint transforms, used in delta throttling.
-            /// </summary>
-            public readonly Dictionary<JointType, Vec3> JointPositions = new Dictionary<JointType, Vec3>();
-            public readonly Dictionary<JointType, Vec3> JointRotations = new Dictionary<JointType, Vec3>();
-
-            /// <summary>
-            /// Last update time.
-            /// </summary>
-            public DateTime LastUpdate = DateTime.MinValue;
             
             /// <summary>
             /// The current visibility state.
@@ -103,6 +92,10 @@ namespace Enklu.Mamba.Kinect
         private const string PropVisible = "visible";
         private const string PropPosition = "position";
         private const string PropRotation = "rotation";
+
+        private DateTime _lastUpdate = DateTime.MinValue;
+        
+        private readonly List<ElementActionData> _updates = new List<ElementActionData>();
 
         /// <summary>
         /// Constructor.
@@ -194,6 +187,8 @@ namespace Enklu.Mamba.Kinect
                                 $"({string.Join(", ", _trackList.Select(j => j.ToString()))})");
                 
                 _bodyCapture = new BodyCapture(_sensor, _trackList);
+                _bodyCapture.OnFrameStart += Body_OnFrameStart;
+                _bodyCapture.OnFrameEnd += Body_OnFrameEnd;
                 _bodyCapture.OnBodyDetected += Body_OnDetected;
                 _bodyCapture.OnBodyUpdated += Body_OnUpdated;
                 _bodyCapture.OnBodyLost += Body_OnLost;
@@ -207,8 +202,6 @@ namespace Enklu.Mamba.Kinect
 
                 _kinectElement = null;
 
-                // TODO: Reset lookup tables
-
                 foreach (var bodyElements in _bodyElements.Values)
                 {
                     if (bodyElements != null) DestroyBody(bodyElements);
@@ -216,6 +209,20 @@ namespace Enklu.Mamba.Kinect
                 _bodyElements.Clear();
                 
                 _active = false;
+            }
+        }
+
+        private void Body_OnFrameStart()
+        {
+            _updates.Clear();
+        }
+
+        private void Body_OnFrameEnd()
+        {
+            if (_updates.Count > 0)
+            {
+                _network.Update(_updates.ToArray());
+                _lastUpdate = DateTime.Now;
             }
         }
 
@@ -244,9 +251,8 @@ namespace Enklu.Mamba.Kinect
                         _network.Destroy(rootElement.Id);
                         return;
                     }
-                    
-                    var bodyElements = new BodyElements();
-                    bodyElements.RootElement = rootElement;
+
+                    var bodyElements = new BodyElements { RootElement = rootElement };
 
                     var jointCreates = new Task<ElementData>[_trackList.Length];
                     Log.Information($"Creating {jointCreates.Length} joint elements (Body={id}).");
@@ -288,19 +294,16 @@ namespace Enklu.Mamba.Kinect
                 Log.Error("Body updated, but was never tracked.");
                 return;
             }
+            
+            if ((DateTime.Now - _lastUpdate).TotalMilliseconds < _config.SendIntervalMs)
+            {
+                return; // Time throttling
+            }
 
             if (bodyElements == null)
             {
                 return; // This is okay, Elements are in flight.
             }
-            
-            if ((DateTime.Now - bodyElements.LastUpdate).TotalMilliseconds < _config.SendIntervalMs)
-            {
-                return; // Time throttling
-            }
-
-            const int stride = 2;
-            var updates = new ElementActionData[_trackList.Length * stride];
 
             for (int i = 0, len = _trackList.Length; i < len; i++)
             {
@@ -323,44 +326,38 @@ namespace Enklu.Mamba.Kinect
                     }
                     return;
                 }
-
-                updates[i * stride] = new ElementActionData
+                
+                _updates.Add(new ElementActionData
                 {
                     ElementId = bodyElements.JointElements[jointType].Id,
                     Type = "update",
                     SchemaType = "vec3",
                     Key = PropPosition,
                     Value = data.JointPositions[jointType]
-                };
-
-                updates[i * stride + 1] = new ElementActionData
+                });
+                
+                _updates.Add(new ElementActionData
                 {
                     ElementId = bodyElements.JointElements[jointType].Id,
                     Type = "update",
                     SchemaType = "vec3",
                     Key = PropRotation,
                     Value = data.JointRotations[jointType]
-                };
+                });
             }
 
             // If previously hidden, unhide!
             if (!bodyElements.Visible)
             {
-                var tmp = new ElementActionData[updates.Length + 1];
-                Array.Copy(updates, tmp, updates.Length);
-                updates = tmp;
-                updates[updates.Length] = new ElementActionData
+                _updates.Add(new ElementActionData
                 {
                     ElementId = bodyElements.RootElement.Id,
                     Type = "update",
                     SchemaType = "bool",
                     Key = PropVisible,
                     Value = true
-                };
+                });
             }
-            
-            _network.Update(updates);
-            bodyElements.LastUpdate = DateTime.Now;
         }
 
         /// <summary>
