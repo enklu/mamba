@@ -68,7 +68,7 @@ namespace Enklu.Mamba
                     Token = config.Token
                 }))
                 {
-                    using (var kinect = new KinectController(new KinectControllerConfiguration(), network, elements))
+                    using (var kinect = new KinectController(config.Kinect, network, elements))
                     {
                         network.Start();
                         kinect.Start();
