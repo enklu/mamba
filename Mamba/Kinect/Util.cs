@@ -12,36 +12,45 @@ namespace Enklu.Mamba.Kinect
     public class Util
     {
         /// <summary>
-        /// Creates a default element with a given name.
+        /// Creates a BodyElements object, populated with ElementData.
         /// </summary>
-        /// <param name="name"></param>
+        /// <param name="name">Element's name.</param>
+        /// <param name="jointMap">Joint asset registration</param>
         /// <returns></returns>
-        public static ElementData CreateElementData(string name)
+        public static BodyElements CreateBodyElements(string name, Dictionary<JointType, string> jointMap)
         {
-            return new ElementData
+            var bodyElements = new BodyElements
             {
-                Schema = new ElementSchemaData
+                RootElement = new ElementData
                 {
-                    Strings = new Dictionary<string, string>
+                    Schema = new ElementSchemaData
                     {
-                        { "name", name }
-                    }
+                        Strings = new Dictionary<string, string> { { "name", name } }
+                    },
+                    Children = new ElementData[jointMap.Keys.Count]
                 }
             };
-        }
 
-        /// <summary>
-        /// Creates an asset with a given name and assetSrc.
-        /// </summary>
-        /// <param name="name"></param>
-        /// <param name="asset"></param>
-        /// <returns></returns>
-        public static ElementData CreateElementData(string name, string asset)
-        {
-            var elm = CreateElementData(name);
-            elm.Schema.Strings["assetSrc"] = asset;
-            elm.Type = ElementTypes.Asset;
-            return elm;
+            var i = 0;
+            foreach (var kvp in jointMap)
+            {
+                var jointElement = new ElementData
+                {
+                    Type = ElementTypes.Asset,
+                    Schema = new ElementSchemaData
+                    {
+                        Strings = new Dictionary<string, string>
+                        {
+                            { "name", kvp.Key.ToString() },
+                            { "assetSrc", kvp.Value }
+                        }
+                    }
+                };
+                bodyElements.RootElement.Children[i++] = jointElement;
+                bodyElements.JointElements[kvp.Key] = jointElement;
+            }
+            
+            return bodyElements;
         }
         
         /// <summary>

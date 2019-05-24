@@ -15,27 +15,6 @@ namespace Enklu.Mamba.Kinect
     public class KinectController : IDisposable
     {
         /// <summary>
-        /// Related Elements for each body.
-        /// </summary>
-        private class BodyElements
-        {
-            /// <summary>
-            /// The root Element all joints position under.
-            /// </summary>
-            public ElementData RootElement;
-            
-            /// <summary>
-            /// The Elements for each joint.
-            /// </summary>
-            public readonly Dictionary<JointType, ElementData> JointElements = new Dictionary<JointType, ElementData>();
-            
-            /// <summary>
-            /// The current visibility state.
-            /// </summary>
-            public bool Visible = true;
-        }
-        
-        /// <summary>
         /// Configuration.
         /// </summary>
         private readonly KinectControllerConfiguration _config;
@@ -232,12 +211,15 @@ namespace Enklu.Mamba.Kinect
         /// <param name="id">Unique ID of the body.</param>
         private void Body_OnDetected(ulong id)
         {
-            Log.Information($"Body detected, creating body elements (Body={id}).");
+            Log.Information($"Body detected, creating body & joint elements (Body={id}).");
 
+            // Register the slot, but don't populate until elements are created on the network.
             _bodyElements[id] = null;
+
+            var bodyElements = Util.CreateBodyElements($"Body {id}", _assetMap);
             
             _network
-                .Create(_kinectElement.Id, Util.CreateElementData($"Body {id}"))
+                .Create(_kinectElement.Id, bodyElements.RootElement)
                 .ContinueWith(task =>
                 {
                     var rootElement = task.Result;
@@ -251,34 +233,8 @@ namespace Enklu.Mamba.Kinect
                         _network.Destroy(rootElement.Id);
                         return;
                     }
-
-                    var bodyElements = new BodyElements { RootElement = rootElement };
-
-                    var jointCreates = new Task<ElementData>[_trackList.Length];
-                    Log.Information($"Creating {jointCreates.Length} joint elements (Body={id}).");
-                    for (int i = 0, len = _trackList.Length; i < len; i++)
-                    {
-                        var jointType = _trackList[i];
-                        jointCreates[i] = _network.Create(rootElement.Id, 
-                            Util.CreateElementData(jointType.ToString(), _assetMap[jointType]));
-                    }
-
-                    Task
-                        .WhenAll(jointCreates)
-                        .ContinueWith(_ =>
-                        {
-                            for (int i = 0, len = _trackList.Length; i < len; i++)
-                            {
-                                var element = jointCreates[i].Result;
-                                Log.Information($"Created joint element (Body={id}, Element={element.Id})");
-
-                                bodyElements.JointElements[_trackList[i]] = element;
-                            }
-
-                            Log.Information($"All joint elements created (Body={id})");
-
-                            _bodyElements[id] = bodyElements;
-                        });
+                    
+                    _bodyElements[id] = bodyElements;
                 });
         }
 

@@ -242,6 +242,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Experience\ExperienceControllerConfig.cs" />
+    <Compile Include="Kinect\BodyElements.cs" />
     <Compile Include="Kinect\Util.cs" />
     <Compile Include="MambaConfiguration.cs" />
     <Compile Include="Experience\ExperienceController.cs" />
