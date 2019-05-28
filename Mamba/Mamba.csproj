@@ -52,6 +52,14 @@
     <Reference Include="Enklu.Data, Version=0.1.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Enklu.Data.0.1.1\lib\net35\Enklu.Data.dll</HintPath>
     </Reference>
+    <Reference Include="Loggly, Version=4.6.1.55, Culture=neutral, PublicKeyToken=aea0e3c965ace843">
+      <HintPath>..\packages\loggly-csharp.4.6.1.55\lib\net45\Loggly.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Loggly.Config, Version=4.6.1.55, Culture=neutral, PublicKeyToken=aea0e3c965ace843">
+      <HintPath>..\packages\loggly-csharp-config.4.6.1.55\lib\net45\Loggly.Config.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions, Version=1.1.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Extensions.DependencyInjection.Abstractions.1.1.0\lib\netstandard1.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
     </Reference>
@@ -93,6 +101,22 @@
     </Reference>
     <Reference Include="Serilog.Sinks.Console, Version=3.1.1.0, Culture=neutral, PublicKeyToken=24c2f752a8e58a10, processorArchitecture=MSIL">
       <HintPath>..\packages\Serilog.Sinks.Console.3.1.1\lib\net45\Serilog.Sinks.Console.dll</HintPath>
+    </Reference>
+    <Reference Include="Serilog.Sinks.File, Version=2.0.0.0, Culture=neutral, PublicKeyToken=24c2f752a8e58a10">
+      <HintPath>..\packages\Serilog.Sinks.File.3.2.0\lib\net45\Serilog.Sinks.File.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Serilog.Sinks.Loggly, Version=3.1.0.0, Culture=neutral, PublicKeyToken=24c2f752a8e58a10">
+      <HintPath>..\packages\Serilog.Sinks.Loggly.5.4.0-dev-00175\lib\net45\Serilog.Sinks.Loggly.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Serilog.Sinks.PeriodicBatching, Version=2.0.0.0, Culture=neutral, PublicKeyToken=24c2f752a8e58a10">
+      <HintPath>..\packages\Serilog.Sinks.PeriodicBatching.2.1.1\lib\net45\Serilog.Sinks.PeriodicBatching.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Serilog.Sinks.RollingFile, Version=2.0.0.0, Culture=neutral, PublicKeyToken=24c2f752a8e58a10">
+      <HintPath>..\packages\Serilog.Sinks.RollingFile.3.3.0\lib\net45\Serilog.Sinks.RollingFile.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.AppContext, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
@@ -242,6 +266,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Experience\ExperienceControllerConfig.cs" />
+    <Compile Include="Kinect\BodyElements.cs" />
     <Compile Include="Kinect\Util.cs" />
     <Compile Include="MambaConfiguration.cs" />
     <Compile Include="Experience\ExperienceController.cs" />
