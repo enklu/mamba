@@ -68,12 +68,18 @@ namespace Enklu.Mamba.Kinect
         /// <summary>
         /// Schema values.
         /// </summary>
-        private const string PropVisible = "visible";
-        private const string PropPosition = "position";
-        private const string PropRotation = "rotation";
+        private const string PROP_VISIBLE = "visible";
+        private const string PROP_POSITION = "position";
+        private const string PROP_ROTATION = "rotation";
 
+        /// <summary>
+        /// Last time an update was sent upstream.
+        /// </summary>
         private DateTime _lastUpdate = DateTime.MinValue;
         
+        /// <summary>
+        /// Batched update calls.
+        /// </summary>
         private readonly List<ElementActionData> _updates = new List<ElementActionData>();
 
         /// <summary>
@@ -191,11 +197,17 @@ namespace Enklu.Mamba.Kinect
             }
         }
 
+        /// <summary>
+        /// Invoked when a new frame of data comes from the Kinect.
+        /// </summary>
         private void Body_OnFrameStart()
         {
             _updates.Clear();
         }
 
+        /// <summary>
+        /// Invoked when a frame completes from the Kinect.
+        /// </summary>
         private void Body_OnFrameEnd()
         {
             if (_updates.Count > 0)
@@ -275,7 +287,7 @@ namespace Enklu.Mamba.Kinect
                            ElementId = bodyElements.RootElement.Id,
                            Type = "update",
                            SchemaType = "bool",
-                           Key = PropVisible,
+                           Key = PROP_VISIBLE,
                            Value = false
                         }});
                         bodyElements.Visible = false;
@@ -288,7 +300,7 @@ namespace Enklu.Mamba.Kinect
                     ElementId = bodyElements.JointElements[jointType].Id,
                     Type = "update",
                     SchemaType = "vec3",
-                    Key = PropPosition,
+                    Key = PROP_POSITION,
                     Value = data.JointPositions[jointType]
                 });
                 
@@ -297,7 +309,7 @@ namespace Enklu.Mamba.Kinect
                     ElementId = bodyElements.JointElements[jointType].Id,
                     Type = "update",
                     SchemaType = "vec3",
-                    Key = PropRotation,
+                    Key = PROP_ROTATION,
                     Value = data.JointRotations[jointType]
                 });
             }
@@ -310,7 +322,7 @@ namespace Enklu.Mamba.Kinect
                     ElementId = bodyElements.RootElement.Id,
                     Type = "update",
                     SchemaType = "bool",
-                    Key = PropVisible,
+                    Key = PROP_VISIBLE,
                     Value = true
                 });
             }
@@ -341,6 +353,10 @@ namespace Enklu.Mamba.Kinect
             _bodyElements.Remove(id);
         }
 
+        /// <summary>
+        /// Destroys a body Element.
+        /// </summary>
+        /// <param name="body"></param>
         private void DestroyBody(BodyElements body)
         {
             Log.Information($"Destroying body (Element={body.RootElement.Id})");

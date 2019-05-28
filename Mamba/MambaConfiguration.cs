@@ -24,6 +24,11 @@ namespace Enklu.Mamba
         public string GraphiteKey;
 
         /// <summary>
+        /// Key to send Loggly metrics with.
+        /// </summary>
+        public string LogglyKey;
+
+        /// <summary>
         /// Kinect configuration.
         /// </summary>
         public readonly KinectControllerConfiguration Kinect = new KinectControllerConfiguration();
@@ -69,6 +74,11 @@ namespace Enklu.Mamba
                 GraphiteKey = config.GraphiteKey;
             }
 
+            if (!string.IsNullOrEmpty(config.LogglyKey))
+            {
+                LogglyKey = config.LogglyKey;
+            }
+
             if (config.Kinect != null)
             {
                 Kinect.Override(config.Kinect);
@@ -83,7 +93,7 @@ namespace Enklu.Mamba
         {
             return
                 $"MyceliumIp: {MyceliumIp}, MyceliumPort: {MyceliumPort}, TrellisUrl: {TrellisUrl}, Token: {Token}, " +
-                $"ExperienceId: {ExperienceId}, GraphiteHost: {GraphiteHost}, GraphiteKey: {GraphiteKey}";
+                $"ExperienceId: {ExperienceId}, GraphiteHost: {GraphiteHost}, GraphiteKey: {GraphiteKey}, LogglyKey: {LogglyKey}";
         }
     }
 }

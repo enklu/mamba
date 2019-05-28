@@ -20,15 +20,18 @@ namespace Enklu.Mamba
         /// </summary>
         static void Main()
         {
-            // logging
-            var log = new LoggerConfiguration()
-                .WriteTo.ColoredConsole()
-                .MinimumLevel.Information()
-                .CreateLogger();
-            Log.Logger = log;
-            Log.Information("Logging initialized.");
-            
             var config = Configuration();
+            
+            // logging
+            var logConfig = new LoggerConfiguration().WriteTo.ColoredConsole();
+
+            if (!string.IsNullOrEmpty(config.LogglyKey))
+            {
+                logConfig = logConfig.WriteTo.Loggly(customerToken: config.LogglyKey, tags: $"mamba");
+            }
+            
+            Log.Logger = logConfig.MinimumLevel.Information().CreateLogger();
+            Log.Information("Logging initialized.");
 
             Log.Information("Configuration: {0}", config);
             Run(config).Wait();
@@ -57,7 +60,6 @@ namespace Enklu.Mamba
                 catch (Exception exception)
                 {
                     Log.Error($"Could not initialize experience: '{exception}'.");
-
                     return;
                 }
 
