@@ -52,14 +52,6 @@
     <Reference Include="Enklu.Data, Version=0.1.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Enklu.Data.0.1.1\lib\net35\Enklu.Data.dll</HintPath>
     </Reference>
-    <Reference Include="Loggly, Version=4.6.1.55, Culture=neutral, PublicKeyToken=aea0e3c965ace843">
-      <HintPath>..\packages\loggly-csharp.4.6.1.55\lib\net45\Loggly.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Loggly.Config, Version=4.6.1.55, Culture=neutral, PublicKeyToken=aea0e3c965ace843">
-      <HintPath>..\packages\loggly-csharp-config.4.6.1.55\lib\net45\Loggly.Config.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions, Version=1.1.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Extensions.DependencyInjection.Abstractions.1.1.0\lib\netstandard1.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
     </Reference>
@@ -89,7 +81,7 @@
     <Reference Include="Mycerializer.Netty, Version=0.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Mycerializer.Netty.0.1.0\lib\netstandard2.0\Mycerializer.Netty.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+    <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Lib\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -104,10 +96,6 @@
     </Reference>
     <Reference Include="Serilog.Sinks.File, Version=2.0.0.0, Culture=neutral, PublicKeyToken=24c2f752a8e58a10">
       <HintPath>..\packages\Serilog.Sinks.File.3.2.0\lib\net45\Serilog.Sinks.File.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Serilog.Sinks.Loggly, Version=3.1.0.0, Culture=neutral, PublicKeyToken=24c2f752a8e58a10">
-      <HintPath>..\packages\Serilog.Sinks.Loggly.5.4.0-dev-00175\lib\net45\Serilog.Sinks.Loggly.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Serilog.Sinks.PeriodicBatching, Version=2.0.0.0, Culture=neutral, PublicKeyToken=24c2f752a8e58a10">
@@ -268,6 +256,7 @@
     <Compile Include="Experience\ExperienceControllerConfig.cs" />
     <Compile Include="Kinect\BodyElements.cs" />
     <Compile Include="Kinect\Util.cs" />
+    <Compile Include="LogglySink.cs" />
     <Compile Include="MambaConfiguration.cs" />
     <Compile Include="Experience\ExperienceController.cs" />
     <Compile Include="Kinect\BodyCapture.cs" />
