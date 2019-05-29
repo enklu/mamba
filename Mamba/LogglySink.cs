@@ -30,12 +30,18 @@ namespace Enklu.Mamba
         private readonly string _tag;
 
         /// <summary>
+        /// Id of the experience.
+        /// </summary>
+        private readonly string _experienceId;
+
+        /// <summary>
         /// Constructor.
         /// </summary>
-        public LogglySink(string customerToken, string tag, int batchSizeLimit, TimeSpan period) : base(batchSizeLimit, period)
+        public LogglySink(string customerToken, string tag, string experienceId, int batchSizeLimit, TimeSpan period) : base(batchSizeLimit, period)
         {
             _customerToken = customerToken;
             _tag = tag;
+            _experienceId = experienceId;
         }
         
         /// <inheritdoc />
@@ -48,6 +54,7 @@ namespace Enklu.Mamba
                     {
                         new KeyValuePair<string, string>("level", @event.Level.ToString()),
                         new KeyValuePair<string, string>("message", @event.RenderMessage()),
+                        new KeyValuePair<string, string>("appId", _experienceId)
                     };
 
                     foreach (var key in @event.Properties.Keys)

@@ -30,6 +30,7 @@ namespace Enklu.Mamba
                 logConfig.WriteTo.Sink(new LogglySink(
                     config.LogglyKey,
                     "mamba",
+                    config.ExperienceId,
                     10, TimeSpan.FromSeconds(5)));
             }
             
