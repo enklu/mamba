@@ -66,8 +66,7 @@ namespace Enklu.Mamba
                         .PostAsync(
                             $"https://logs-01.loggly.com/inputs/{_customerToken}/tag/{_tag}",
                             new FormUrlEncodedContent(list));
-                })
-                .ToArray());
+                }));
         }
     }
 }
