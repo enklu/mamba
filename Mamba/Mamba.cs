@@ -27,7 +27,11 @@ namespace Enklu.Mamba
 
             if (!string.IsNullOrEmpty(config.LogglyKey))
             {
-                logConfig = logConfig.WriteTo.Loggly(customerToken: config.LogglyKey, tags: $"mamba");
+                logConfig.WriteTo.Sink(new LogglySink(
+                    config.LogglyKey,
+                    "mamba",
+                    config.ExperienceId,
+                    10, TimeSpan.FromSeconds(5)));
             }
             
             Log.Logger = logConfig.MinimumLevel.Information().CreateLogger();
