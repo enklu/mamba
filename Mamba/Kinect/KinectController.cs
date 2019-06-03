@@ -262,12 +262,11 @@ namespace Enklu.Mamba.Kinect
             try
             {
                 var rootElement = await _network.Create(_kinectElement.Id, bodyElements.RootElement);
-                var createdBody = new BodyElements(rootElement);
 
                 Log.Information($"Successfully created body root element (Body={id} Element={rootElement.Id}).");
 
                 // double check the body didn't disappear during the network op
-                if (!_bodyElements.TryUpdate(id, createdBody, defaultBody))
+                if (!_bodyElements.TryUpdate(id, bodyElements, defaultBody))
                 {
                     Log.Information(
                         $"Matching body already gone. Destroying (Body={id} Element={rootElement.Id}).");
