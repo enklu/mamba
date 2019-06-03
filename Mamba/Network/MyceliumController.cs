@@ -94,41 +94,36 @@ namespace Enklu.Mamba.Network
         }
         
         /// <inheritdoc />
-        public Task<ElementData> Create(
+        public async Task<ElementData> Create(
             string parentId,
             ElementData element,
             string owner = null,
             ElementExpirationType expiration = ElementExpirationType.Session)
         {
+            var parentHash = _handler.Map.ElementHash(parentId);
+            if (0 == parentHash)
+            {
+                throw new Exception($"Could not find parent hash for %{parentId}.");
+            }
+
             OverwriteIds(element);
+            
+            Log.Information($"Creating element with parent [Id: ${parentId}, Hash: ${parentHash}");
 
-            try
+            var response = await _handler.SendRequest(new CreateElementRequest
             {
-                Log.Information($"Creating element with parent [Id: ${parentId}, Hash: ${_handler.Map.ElementHash(parentId)}");
+                ParentHash = _handler.Map.ElementHash(parentId),
+                Element = element,
+                Owner = owner,
+                Expiration = expiration
+            });
 
-                return _handler
-                    .SendRequest(new CreateElementRequest
-                    {
-                        ParentHash = _handler.Map.ElementHash(parentId),
-                        Element = element,
-                        Owner = owner,
-                        Expiration = expiration
-                    })
-                    .ContinueWith(task =>
-                    {
-                        if (task.Result.Success)
-                        {
-                            return element;
-                        }
-
-                        throw new Exception("Could not create element.");
-                    });
-            }
-            catch (NullReferenceException)
+            if (response.Success)
             {
-                // handler may be null
-                throw new Exception("Mycelium is disconnected.");
+                return element;
             }
+
+            throw new Exception("Could not create element.");
         }
 
         /// <inheritdoc />
@@ -168,30 +163,19 @@ namespace Enklu.Mamba.Network
         }
         
         /// <inheritdoc />
-        public Task Destroy(string id)
+        public async Task Destroy(string id)
         {
-            try
+            var response = await _handler.SendRequest(new DeleteElementRequest
             {
-                return _handler
-                    .SendRequest(new DeleteElementRequest
-                    {
-                        ElementHash = _handler.Map.ElementHash(id)
-                    })
-                    .ContinueWith(task =>
-                    {
-                        if (task.Result.Success)
-                        {
-                            return;
-                        }
+                ElementHash = _handler.Map.ElementHash(id)
+            });
 
-                        throw new Exception("Could not create element.");
-                    });
-            }
-            catch (NullReferenceException)
+            if (response.Success)
             {
-                // handler may be null
-                throw new Exception("Mycelium is disconnected.");
+                return;
             }
+
+            throw new Exception("Could not create element.");
         }
 
         /// <summary>

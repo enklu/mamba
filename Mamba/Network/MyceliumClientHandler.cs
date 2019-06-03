@@ -31,6 +31,11 @@ namespace Enklu.Mamba.Network
         private IChannelHandlerContext _context;
 
         /// <summary>
+        /// Keep alive!
+        /// </summary>
+        private KeepAliveThrottle _keepAlive;
+
+        /// <summary>
         /// Maps from id to hash.
         /// </summary>
         public ElementMap Map { get; private set; }
@@ -101,6 +106,9 @@ namespace Enklu.Mamba.Network
             
             Log.Information("Disconnected!");
 
+            _keepAlive?.Dispose();
+            _keepAlive = null;
+
             OnDisconnected?.Invoke(this);
         }
 
@@ -114,6 +122,9 @@ namespace Enklu.Mamba.Network
             if (message is LoginResponse)
             {
                 Log.Information("Logged in!");
+
+                _keepAlive = new KeepAliveThrottle(context.Channel);
+                _keepAlive.Start();
             }
             else if (message is SceneDiffEvent diff)
             {
@@ -150,6 +161,11 @@ namespace Enklu.Mamba.Network
                 {
                     source.SetResult(res);
                 }
+            }
+            else if (message is PingResponse pingResponse)
+            {
+                // Pass the ping response to the keep alive throttle
+                _keepAlive?.Received(pingResponse);
             }
             else
             {

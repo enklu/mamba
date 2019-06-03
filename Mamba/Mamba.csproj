@@ -77,11 +77,11 @@
       <Private>True</Private>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Mycelium.Messages, Version=0.1.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Mycelium.Messages.0.1.3\lib\net35\Mycelium.Messages.dll</HintPath>
+    <Reference Include="Mycelium.Messages, Version=0.1.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Mycelium.Messages.0.1.4\lib\net35\Mycelium.Messages.dll</HintPath>
     </Reference>
-    <Reference Include="Mycelium.Messages.Gen, Version=0.1.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Mycelium.Messages.Gen.0.1.3\lib\net35\Mycelium.Messages.Gen.dll</HintPath>
+    <Reference Include="Mycelium.Messages.Gen, Version=0.1.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Mycelium.Messages.Gen.0.1.4\lib\net35\Mycelium.Messages.Gen.dll</HintPath>
     </Reference>
     <Reference Include="Mycerializer, Version=0.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Mycerializer.0.1.0\lib\net35\Mycerializer.dll</HintPath>
@@ -277,11 +277,13 @@
     <Compile Include="Mamba.cs" />
     <Compile Include="Network\ElementTypes.cs" />
     <Compile Include="Network\IMyceliumInterface.cs" />
+    <Compile Include="Network\KeepAliveThrottle.cs" />
     <Compile Include="Network\MyceliumClientHandler.cs" />
     <Compile Include="Network\MyceliumController.cs" />
     <Compile Include="Network\MyceliumControllerConfiguration.cs" />
     <Compile Include="Network\TypeBinder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Util\AsyncTimer.cs" />
     <Compile Include="Util\DummyNetworkMetricsProvider.cs" />
   </ItemGroup>
   <ItemGroup>

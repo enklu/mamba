@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -53,7 +54,7 @@ namespace Enklu.Mamba.Kinect
         /// Map of tracked body ID -> BodyElements. Keys will exist when a body is detected.
         /// Values will populate asynchronously after network ops.
         /// </summary>
-        private readonly Dictionary<ulong, BodyElements> _bodyElements = new Dictionary<ulong, BodyElements>();
+        private readonly ConcurrentDictionary<ulong, BodyElements> _bodyElements = new ConcurrentDictionary<ulong, BodyElements>();
 
         /// <summary>
         /// The joints the current Kinect Element needs to track.
@@ -151,50 +152,73 @@ namespace Enklu.Mamba.Kinect
             
             if (args.IsAvailable)
             {
-                Log.Information($"Kinect available ({_sensor.UniqueKinectId})");
-
-                _kinectElement = Util.FindKinect(_sensor.UniqueKinectId, _elements);
-                if (_kinectElement == null)
-                {
-                    Log.Warning("No Kinect element found in scene.");
-                    return;
-                }
-                Log.Information($"Kinect element found ({_kinectElement})");
-
-                _assetMap = Util.BuildTracking(_kinectElement);
-                _trackList = _assetMap.Keys.Select(j => j).ToArray();
-                if (_trackList.Length == 0)
-                {
-                    Log.Warning("No tracking desired?");
-                    return;
-                }
-                Log.Information($"Tracking {_trackList.Length} joints " +
-                                $"({string.Join(", ", _trackList.Select(j => j.ToString()))})");
-                
-                _bodyCapture = new BodyCapture(_sensor, _trackList);
-                _bodyCapture.OnFrameStart += Body_OnFrameStart;
-                _bodyCapture.OnFrameEnd += Body_OnFrameEnd;
-                _bodyCapture.OnBodyDetected += Body_OnDetected;
-                _bodyCapture.OnBodyUpdated += Body_OnUpdated;
-                _bodyCapture.OnBodyLost += Body_OnLost;
-                _bodyCapture.Start();
-
-                _active = true;
+                SetupSensor();
             }
             else if (_active)
             {
-                Log.Information("Lost connection to Kinect.");
-
-                _kinectElement = null;
-
-                foreach (var bodyElements in _bodyElements.Values)
-                {
-                    if (bodyElements != null) DestroyBody(bodyElements);
-                }
-                _bodyElements.Clear();
-                
-                _active = false;
+                TeardownSensor();
             }
+        }
+
+        /// <summary>
+        /// Sets up a new Kinect sensor.
+        /// </summary>
+        private void SetupSensor()
+        {
+            Log.Information($"Kinect available ({_sensor.UniqueKinectId})");
+
+            _kinectElement = Util.FindKinect(_sensor.UniqueKinectId, _elements);
+            if (_kinectElement == null)
+            {
+                Log.Warning("No Kinect element found in scene.");
+                return;
+            }
+
+            Log.Information($"Kinect element found ({_kinectElement})");
+
+            _assetMap = Util.BuildTracking(_kinectElement);
+            _trackList = _assetMap.Keys.Select(j => j).ToArray();
+            if (_trackList.Length == 0)
+            {
+                Log.Warning("No tracking desired?");
+                return;
+            }
+
+            var jointInfo = string.Join(", ", _trackList.Select(j => j.ToString()));
+            Log.Information($"Tracking {_trackList.Length} joints ({jointInfo})");
+
+            _bodyCapture = new BodyCapture(_sensor, _trackList);
+            _bodyCapture.OnFrameStart += Body_OnFrameStart;
+            _bodyCapture.OnFrameEnd += Body_OnFrameEnd;
+            _bodyCapture.OnBodyDetected += Body_OnDetected;
+            _bodyCapture.OnBodyUpdated += Body_OnUpdated;
+            _bodyCapture.OnBodyLost += Body_OnLost;
+            _bodyCapture.Start();
+
+            _active = true;
+        }
+
+        /// <summary>
+        /// Tears down a Kinect sensor.
+        /// </summary>
+        private async void TeardownSensor()
+        {
+            Log.Information("Lost connection to Kinect.");
+
+            _kinectElement = null;
+
+            try
+            {
+                await Task.WhenAll(_bodyElements.Values.Select(DestroyBody));
+            }
+            catch (Exception exception)
+            {
+                Log.Warning($"Error tearing down Kinect sensor: {exception}.");
+            }
+
+            _bodyElements.Clear();
+
+            _active = false;
         }
 
         /// <summary>
@@ -221,33 +245,48 @@ namespace Enklu.Mamba.Kinect
         /// Called when BodyCapture detects a new body.
         /// </summary>
         /// <param name="id">Unique ID of the body.</param>
-        private void Body_OnDetected(ulong id)
+        private async void Body_OnDetected(ulong id)
         {
             Log.Information($"Body detected, creating body & joint elements (Body={id}).");
 
-            // Register the slot, but don't populate until elements are created on the network.
-            _bodyElements[id] = null;
+            // register a new body
+            var defaultBody = new BodyElements();
+            if (!_bodyElements.TryAdd(id, defaultBody))
+            {
+                Log.Warning($"New body detected, but already registered: ${id}.");
+                return;
+            }
 
+            // attempt to create elements associated with body
             var bodyElements = Util.CreateBodyElements($"Body {id}", _assetMap);
-            
-            _network
-                .Create(_kinectElement.Id, bodyElements.RootElement)
-                .ContinueWith(task =>
+            try
+            {
+                var rootElement = await _network.Create(_kinectElement.Id, bodyElements.RootElement);
+                var createdBody = new BodyElements(rootElement);
+
+                Log.Information($"Successfully created body root element (Body={id} Element={rootElement.Id}).");
+
+                // double check the body didn't disappear during the network op
+                if (!_bodyElements.TryUpdate(id, createdBody, defaultBody))
                 {
-                    var rootElement = task.Result;
-                    
-                    Log.Information($"Created body root element (Body={id} Element={rootElement.Id}).");
-                    
-                    // Double check the body didn't disappear during the network op
-                    if (!_bodyElements.ContainsKey(id))
-                    {
-                        Log.Information($"Matching body already gone. Destroying (Body={id} Element={rootElement.Id}).");
-                        _network.Destroy(rootElement.Id);
-                        return;
-                    }
-                    
-                    _bodyElements[id] = bodyElements;
-                });
+                    Log.Information(
+                        $"Matching body already gone. Destroying (Body={id} Element={rootElement.Id}).");
+
+                    await _network.Destroy(rootElement.Id);
+                }
+                else
+                {
+                    Log.Information($"Successfully tracked created body element.");
+                }
+            }
+            catch (Exception exception)
+            {
+                Log.Error($"Could not create element: ${exception}");
+
+                // update with failure case
+                var errorBody = new BodyElements(exception);
+                _bodyElements.AddOrUpdate(id, _ => errorBody, (_, __) => errorBody);
+            }
         }
 
         /// <summary>
@@ -262,17 +301,19 @@ namespace Enklu.Mamba.Kinect
                 Log.Error("Body updated, but was never tracked.");
                 return;
             }
-            
+
+            // check that the body elements are ready
+            if (bodyElements.Status != BodyElementStatus.Successful)
+            {
+                return;
+            }
+
+            // time throttling
             if ((DateTime.Now - _lastUpdate).TotalMilliseconds < _config.SendIntervalMs)
             {
-                return; // Time throttling
+                return;
             }
-
-            if (bodyElements == null)
-            {
-                return; // This is okay, Elements are in flight.
-            }
-
+            
             for (int i = 0, len = _trackList.Length; i < len; i++)
             {
                 var jointType = _trackList[i];
@@ -332,46 +373,42 @@ namespace Enklu.Mamba.Kinect
         /// Called when BodyCapture loses a body.
         /// </summary>
         /// <param name="id">Unique ID of the body lost.</param>
-        private void Body_OnLost(ulong id)
+        private async void Body_OnLost(ulong id)
         {
-            if (!_bodyElements.TryGetValue(id, out var bodyElements))
+            if (!_bodyElements.TryRemove(id, out var bodyElements))
             {
                 Log.Error("Body lost, but was never tracked.");
                 return;
             }
 
-            if (bodyElements == null)
+            // no element was created
+            if (bodyElements.Status != BodyElementStatus.Successful)
             {
-                Log.Information($"Body lost before Element created (Body={id})");
-            }
-            else
-            {
-                Log.Information("Body lost.");
-                DestroyBody(bodyElements);
+                return;
             }
 
-            _bodyElements.Remove(id);
+            Log.Information($"Body lost, attempting to destroy (Body={id}).");
+
+            await DestroyBody(bodyElements);
         }
 
         /// <summary>
         /// Destroys a body Element.
         /// </summary>
         /// <param name="body"></param>
-        private void DestroyBody(BodyElements body)
+        private async Task DestroyBody(BodyElements body)
         {
-            Log.Information($"Destroying body (Element={body.RootElement.Id})");
+            Log.Information($"Attempting to destroy body (Element={body.RootElement.Id})");
+
             try
             {
-                _network
-                    .Destroy(body.RootElement.Id)
-                    .ContinueWith(_ =>
-                    {
-                        Log.Information($"Destruction successful (Element={body.RootElement.Id}");
-                    });
+                await _network.Destroy(body.RootElement.Id);
+
+                Log.Information($"Destruction successful (Element={body.RootElement.Id}");
             }
-            catch (Exception e)
+            catch (Exception exception)
             {
-                Log.Error($"Error destroying body (Element={body.RootElement.Id}, Exception={e}");
+                Log.Error($"Error destroying body (Element={body.RootElement.Id}, Exception={exception}");
             }
         }
     }

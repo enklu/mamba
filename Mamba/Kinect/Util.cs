@@ -19,17 +19,14 @@ namespace Enklu.Mamba.Kinect
         /// <returns></returns>
         public static BodyElements CreateBodyElements(string name, Dictionary<JointType, string> jointMap)
         {
-            var bodyElements = new BodyElements
+            var bodyElements = new BodyElements (new ElementData
             {
-                RootElement = new ElementData
+                Schema = new ElementSchemaData
                 {
-                    Schema = new ElementSchemaData
-                    {
-                        Strings = new Dictionary<string, string> { { "name", name } }
-                    },
-                    Children = new ElementData[jointMap.Keys.Count]
-                }
-            };
+                    Strings = new Dictionary<string, string> { { "name", name } }
+                },
+                Children = new ElementData[jointMap.Keys.Count]
+            });
 
             var i = 0;
             foreach (var kvp in jointMap)
