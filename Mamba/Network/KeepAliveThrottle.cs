@@ -48,8 +48,6 @@ namespace Enklu.Mamba.Network
                     _lastSent = DateTimeOffset.UtcNow;
 
                     _channel.WriteAndFlushAsync(_outboundRequest);
-
-                    Log.Information($"Ping sent.");
                 }
 
                 return;
@@ -70,9 +68,7 @@ namespace Enklu.Mamba.Network
             {
                 return;
             }
-
-            Log.Information($"Ping received.");
-
+            
             if (response.PingId == _outboundRequest.PingId)
             {
                 _lastReceived = DateTimeOffset.UtcNow;
