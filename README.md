@@ -1,6 +1,8 @@
 # Mamba
 
-[![CodeFactor](https://www.codefactor.io/repository/github/enklu/mamba/badge)](https://www.codefactor.io/repository/github/enklu/mamba) [![Join the chat at https://gitter.im/enklu/mamba](https://badges.gitter.im/enklu/mamba.svg)](https://gitter.im/enklu/mamba?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![CodeFactor](https://www.codefactor.io/repository/github/enklu/mamba/badge)](https://www.codefactor.io/repository/github/enklu/mamba)
+
+[![Join the chat at https://discord.gg/uGkBkeW](https://img.shields.io/discord/580823343733932032.svg?color=%2320ce88&label=Discord)](https://discord.gg/uGkBkeW)
 
 *Why is this named mamba?* My friend, the Black Mamba can see infrared-- JUST LIKE A KINECT! Get it? Did you get it...?
 
